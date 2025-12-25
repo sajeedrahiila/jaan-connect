@@ -81,7 +81,7 @@ export function Header() {
               asChild
               aria-label="Account"
             >
-              <Link to={isAuthenticated ? "/account" : "/login"}>
+              <Link to={isAuthenticated ? "/account" : "/auth"}>
                 <User className="h-5 w-5" />
               </Link>
             </Button>
