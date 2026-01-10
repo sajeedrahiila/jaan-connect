@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Mail, Lock, User, ArrowRight, Loader2, ArrowLeft } from 'lucide-react';
@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/hooks/useAuth';
 
 // Validation schemas
 const loginSchema = z.object({
@@ -50,13 +50,18 @@ const Auth = () => {
 
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { login: authLogin, register: authRegister, user } = useAuth();
+  const { user, isAdmin, signIn, signUp, resetPassword } = useSupabaseAuth();
 
   // Redirect if already logged in
-  if (user) {
-    navigate('/');
-    return null;
-  }
+  useEffect(() => {
+    if (user) {
+      if (isAdmin) {
+        navigate('/admin');
+      } else {
+        navigate('/');
+      }
+    }
+  }, [user, isAdmin, navigate]);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -101,47 +106,48 @@ const Auth = () => {
 
     try {
       if (mode === 'login') {
-        const result = await authLogin(formData.email, formData.password);
-        if (result.success) {
+        const { error } = await signIn(formData.email, formData.password);
+        if (error) {
+          toast({
+            title: 'Login failed',
+            description: error.message || 'Invalid email or password.',
+            variant: 'destructive',
+          });
+        } else {
           toast({
             title: 'Welcome back!',
             description: 'You have been successfully logged in.',
           });
-          navigate('/');
-        } else {
-          toast({
-            title: 'Login failed',
-            description: result.error || 'Invalid email or password. Try demo@jaan.com / demo123',
-            variant: 'destructive',
-          });
         }
       } else if (mode === 'register') {
-        const result = await authRegister({
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-        });
-        if (result.success) {
+        const { error } = await signUp(formData.email, formData.password, formData.name);
+        if (error) {
+          toast({
+            title: 'Registration failed',
+            description: error.message || 'Something went wrong. Please try again.',
+            variant: 'destructive',
+          });
+        } else {
           toast({
             title: 'Account created!',
             description: 'Welcome to Jaan Distributors.',
           });
-          navigate('/');
-        } else {
-          toast({
-            title: 'Registration failed',
-            description: result.error || 'Something went wrong. Please try again.',
-            variant: 'destructive',
-          });
         }
       } else {
-        // Forgot password - mock implementation
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast({
-          title: 'Check your email',
-          description: 'If an account exists, we\'ve sent password reset instructions.',
-        });
-        setMode('login');
+        const { error } = await resetPassword(formData.email);
+        if (error) {
+          toast({
+            title: 'Error',
+            description: error.message || 'Failed to send reset email.',
+            variant: 'destructive',
+          });
+        } else {
+          toast({
+            title: 'Check your email',
+            description: 'If an account exists, we\'ve sent password reset instructions.',
+          });
+          setMode('login');
+        }
       }
     } catch (error) {
       toast({
@@ -174,6 +180,10 @@ const Auth = () => {
       case 'forgot-password': return 'Enter your email to receive reset instructions';
     }
   };
+
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-secondary via-background to-secondary/50 flex items-center justify-center p-4">
@@ -352,15 +362,6 @@ const Auth = () => {
                     </>
                   )}
                 </Button>
-
-                {/* Demo credentials hint */}
-                {mode === 'login' && (
-                  <div className="bg-secondary/50 rounded-lg p-3 text-center text-sm">
-                    <p className="text-muted-foreground">
-                      Demo: <span className="font-mono text-foreground">demo@jaan.com</span> / <span className="font-mono text-foreground">demo123</span>
-                    </p>
-                  </div>
-                )}
               </form>
 
               {/* Switch mode links */}
