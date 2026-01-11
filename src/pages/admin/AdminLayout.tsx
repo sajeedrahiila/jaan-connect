@@ -13,6 +13,9 @@ import {
   ChevronDown,
   Bell,
   Search,
+  BarChart3,
+  FolderTree,
+  Activity,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -31,9 +34,10 @@ const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/products', icon: Package, label: 'Products' },
+  { href: '/admin/categories', icon: FolderTree, label: 'Categories' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
-  { href: '/admin/analytics', icon: LayoutDashboard, label: 'Analytics' },
-  { href: '/admin/activity', icon: Bell, label: 'Activity' },
+  { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
+  { href: '/admin/activity', icon: Activity, label: 'Activity' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
