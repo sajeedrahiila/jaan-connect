@@ -16,6 +16,7 @@ import {
   BarChart3,
   FolderTree,
   Activity,
+  UserCircle,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -33,6 +34,7 @@ import { cn } from '@/lib/utils';
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/users', icon: Users, label: 'Users' },
+  { href: '/admin/customers', icon: UserCircle, label: 'Customers' },
   { href: '/admin/products', icon: Package, label: 'Products' },
   { href: '/admin/categories', icon: FolderTree, label: 'Categories' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
