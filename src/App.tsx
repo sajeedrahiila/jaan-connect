@@ -28,6 +28,7 @@ import AnalyticsPage from "./pages/admin/AnalyticsPage";
 import ActivityPage from "./pages/admin/ActivityPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
 import CustomersPage from "./pages/admin/CustomersPage";
+import InventoryPage from "./pages/admin/InventoryPage";
 
 const queryClient = new QueryClient();
 
@@ -55,6 +56,7 @@ const App = () => (
                 <Route index element={<Dashboard />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="products" element={<ProductsPage />} />
+                <Route path="inventory" element={<InventoryPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="customers" element={<CustomersPage />} />
