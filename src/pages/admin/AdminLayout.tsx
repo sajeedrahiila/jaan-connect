@@ -32,6 +32,8 @@ const navItems = [
   { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/products', icon: Package, label: 'Products' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/admin/analytics', icon: LayoutDashboard, label: 'Analytics' },
+  { href: '/admin/activity', icon: Bell, label: 'Activity' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },
 ];
 
