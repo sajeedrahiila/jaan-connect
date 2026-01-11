@@ -5,7 +5,7 @@ import { ShoppingCart, User, Search, Menu, X, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { useCart } from '@/contexts/CartContext';
-import { useAuth } from '@/contexts/AuthContext';
+import { useSupabaseAuth } from '@/hooks/useAuth';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
@@ -18,7 +18,7 @@ const navLinks = [
 export function Header() {
   const location = useLocation();
   const { cart, openCart } = useCart();
-  const { isAuthenticated } = useAuth();
+  const { user } = useSupabaseAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
@@ -81,7 +81,7 @@ export function Header() {
               asChild
               aria-label="Account"
             >
-              <Link to={isAuthenticated ? "/account" : "/auth"}>
+              <Link to={user ? "/account" : "/auth"}>
                 <User className="h-5 w-5" />
               </Link>
             </Button>
