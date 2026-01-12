@@ -3,6 +3,7 @@ import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'fram
 import { ArrowRight, Truck, Shield, Clock, Leaf, Star, Users, Package, ChevronRight, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
+import { ScrollReveal } from '@/components/ScrollReveal';
 import { useRef, useEffect } from 'react';
 
 const features = [
@@ -436,166 +437,281 @@ const Index = () => {
       </section>
 
       {/* Features Section */}
-      <section className="py-20 lg:py-28 bg-background">
-        <div className="container-wide">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+      <section className="py-20 lg:py-28 bg-background relative">
+        {/* Animated gradient background */}
+        <motion.div
+          animate={{
+            background: [
+              'radial-gradient(800px at 0% 0%, rgba(var(--color-primary), 0.05) 0%, transparent 50%)',
+              'radial-gradient(800px at 100% 100%, rgba(var(--color-accent), 0.05) 0%, transparent 50%)',
+              'radial-gradient(800px at 0% 0%, rgba(var(--color-primary), 0.05) 0%, transparent 50%)',
+            ]
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute inset-0 pointer-events-none"
+        />
+
+        <div className="container-wide relative z-10">
+          <ScrollReveal direction="down" className="text-center mb-14">
             <span className="text-primary font-semibold text-sm uppercase tracking-wider">Why Choose Us</span>
             <h2 className="text-3xl lg:text-4xl font-bold mt-2">Built for Business Success</h2>
-          </motion.div>
+          </ScrollReveal>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
             {features.map((feature, i) => (
-              <motion.div
+              <ScrollReveal 
                 key={feature.title}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1, duration: 0.5 }}
-                whileHover={{ y: -8 }}
-                className="group relative bg-card rounded-2xl border border-border p-6 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300"
+                direction="up"
+                delay={i * 0.1}
               >
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
-                <div className="relative">
-                  <motion.div 
-                    whileHover={{ rotate: [0, -10, 10, 0] }}
-                    transition={{ duration: 0.5 }}
-                    className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-primary/10 mb-4 group-hover:bg-primary/20 transition-colors"
-                  >
-                    <feature.icon className="h-7 w-7 text-primary" />
-                  </motion.div>
-                  <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
-                  <p className="text-muted-foreground text-sm">{feature.description}</p>
-                </div>
-              </motion.div>
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.1, duration: 0.5 }}
+                  whileHover={{ y: -8 }}
+                  className="group relative bg-card rounded-2xl border border-border p-6 hover:border-primary/30 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 overflow-hidden"
+                >
+                  {/* Hover glow effect */}
+                  <motion.div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      background: 'radial-gradient(circle at center, rgba(var(--color-primary), 0.1) 0%, transparent 70%)',
+                    }}
+                  />
+
+                  {/* Animated gradient background */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 rounded-2xl transition-opacity duration-300" />
+                  
+                  <div className="relative">
+                    <motion.div 
+                      whileHover={{ 
+                        rotate: [0, -10, 10, 0],
+                        scale: [1, 1.1, 1]
+                      }}
+                      transition={{ duration: 0.5 }}
+                      className="inline-flex h-14 w-14 items-center justify-center rounded-xl bg-gradient-to-br from-primary/20 to-primary/5 mb-4 group-hover:from-primary/30 group-hover:to-primary/10 transition-colors shadow-lg shadow-primary/10 group-hover:shadow-primary/20"
+                    >
+                      <feature.icon className="h-7 w-7 text-primary" />
+                    </motion.div>
+                    <h3 className="font-bold text-lg mb-2">{feature.title}</h3>
+                    <p className="text-muted-foreground text-sm">{feature.description}</p>
+                  </div>
+                </motion.div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* Testimonials */}
-      <section className="py-20 lg:py-28 bg-secondary/30">
-        <div className="container-wide">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            className="text-center mb-14"
-          >
+      <section className="py-20 lg:py-28 bg-secondary/30 relative overflow-hidden">
+        {/* Animated gradient background */}
+        <motion.div
+          animate={{
+            background: [
+              'radial-gradient(800px at 100% 0%, rgba(var(--color-accent), 0.05) 0%, transparent 50%)',
+              'radial-gradient(800px at 0% 100%, rgba(var(--color-primary), 0.05) 0%, transparent 50%)',
+              'radial-gradient(800px at 100% 0%, rgba(var(--color-accent), 0.05) 0%, transparent 50%)',
+            ]
+          }}
+          transition={{ duration: 20, repeat: Infinity }}
+          className="absolute inset-0 pointer-events-none"
+        />
+
+        <div className="container-wide relative z-10">
+          <ScrollReveal direction="down" className="text-center mb-14">
             <span className="text-primary font-semibold text-sm uppercase tracking-wider">Testimonials</span>
             <h2 className="text-3xl lg:text-4xl font-bold mt-2">What Our Partners Say</h2>
-          </motion.div>
+          </ScrollReveal>
           
           <div className="grid md:grid-cols-3 gap-6">
             {testimonials.map((testimonial, i) => (
-              <motion.div
+              <ScrollReveal 
                 key={testimonial.name}
-                initial={{ opacity: 0, y: 30 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.15, duration: 0.5 }}
-                whileHover={{ y: -5 }}
-                className="bg-card rounded-2xl border border-border p-6 hover:shadow-lg transition-all duration-300"
+                direction="up"
+                delay={i * 0.1}
               >
-                <div className="flex gap-1 mb-4">
-                  {[...Array(testimonial.rating)].map((_, j) => (
-                    <motion.div
-                      key={j}
-                      initial={{ opacity: 0, scale: 0 }}
-                      whileInView={{ opacity: 1, scale: 1 }}
-                      viewport={{ once: true }}
-                      transition={{ delay: 0.3 + j * 0.05 }}
-                    >
-                      <Star className="h-5 w-5 fill-accent text-accent" />
-                    </motion.div>
-                  ))}
-                </div>
-                <p className="text-foreground mb-4 leading-relaxed">"{testimonial.text}"</p>
-                <div className="flex items-center gap-3">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-semibold">
-                    {testimonial.name.charAt(0)}
+                <motion.div
+                  initial={{ opacity: 0, y: 30 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.15, duration: 0.5 }}
+                  whileHover={{ y: -5 }}
+                  className="group bg-card rounded-2xl border border-border p-6 hover:shadow-xl hover:shadow-primary/10 transition-all duration-300 relative overflow-hidden"
+                >
+                  {/* Hover glow effect */}
+                  <motion.div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{
+                      background: 'radial-gradient(circle at center, rgba(var(--color-primary), 0.08) 0%, transparent 70%)',
+                    }}
+                  />
+
+                  <div className="relative">
+                    <div className="flex gap-1 mb-4">
+                      {[...Array(testimonial.rating)].map((_, j) => (
+                        <motion.div
+                          key={j}
+                          initial={{ opacity: 0, scale: 0 }}
+                          whileInView={{ opacity: 1, scale: 1 }}
+                          viewport={{ once: true }}
+                          transition={{ delay: 0.3 + j * 0.05 }}
+                        >
+                          <motion.div
+                            whileHover={{ scale: 1.2, rotate: [0, -10, 10, 0] }}
+                            transition={{ duration: 0.3 }}
+                          >
+                            <Star className="h-5 w-5 fill-accent text-accent" />
+                          </motion.div>
+                        </motion.div>
+                      ))}
+                    </div>
+                    <p className="text-foreground mb-4 leading-relaxed">"{testimonial.text}"</p>
+                    <div className="flex items-center gap-3">
+                      <motion.div
+                        whileHover={{ scale: 1.1 }}
+                        className="h-10 w-10 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 flex items-center justify-center text-primary font-semibold shadow-lg shadow-primary/10"
+                      >
+                        {testimonial.name.charAt(0)}
+                      </motion.div>
+                      <div>
+                        <p className="font-semibold text-sm">{testimonial.name}</p>
+                        <p className="text-muted-foreground text-xs">{testimonial.role}</p>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-semibold text-sm">{testimonial.name}</p>
-                    <p className="text-muted-foreground text-xs">{testimonial.role}</p>
-                  </div>
-                </div>
-              </motion.div>
+                </motion.div>
+              </ScrollReveal>
             ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 lg:py-28">
-        <div className="container-wide">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            whileInView={{ opacity: 1, scale: 1 }}
-            viewport={{ once: true }}
-            className="relative bg-gradient-to-br from-primary via-primary to-primary/90 rounded-3xl p-8 lg:p-16 text-center text-primary-foreground overflow-hidden"
-          >
-            {/* Background decoration */}
-            <div className="absolute inset-0 overflow-hidden">
+      <section className="py-20 lg:py-28 relative overflow-hidden">
+        <div className="container-wide relative z-10">
+          <ScrollReveal scale={0.95}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              whileInView={{ opacity: 1, scale: 1 }}
+              viewport={{ once: true }}
+              className="relative bg-gradient-to-br from-primary via-primary to-primary/90 rounded-3xl p-8 lg:p-16 text-center text-primary-foreground overflow-hidden group"
+            >
+              {/* Animated gradient overlay */}
               <motion.div
-                animate={{ 
-                  x: [0, 100, 0],
-                  y: [0, -50, 0],
+                animate={{
+                  opacity: [0.5, 1, 0.5],
                 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent"
               />
-              <motion.div
-                animate={{ 
-                  x: [0, -100, 0],
-                  y: [0, 50, 0],
-                }}
-                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
-                className="absolute bottom-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
-              />
-            </div>
-            
-            <div className="relative z-10">
-              <motion.h2 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                className="text-3xl lg:text-5xl font-bold mb-4"
-              >
-                Ready to Partner With Us?
-              </motion.h2>
-              <motion.p 
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.1 }}
-                className="text-primary-foreground/80 max-w-2xl mx-auto mb-8 text-lg"
-              >
-                Join hundreds of businesses that trust Jaan Distributors for their grocery supply needs.
-              </motion.p>
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.2 }}
-                className="flex flex-col sm:flex-row gap-4 justify-center"
-              >
-                <Button variant="accent" size="xl" asChild className="group">
-                  <Link to="/register">
-                    Create Business Account
-                    <ArrowRight className="ml-2 h-5 w-5 transition-transform group-hover:translate-x-1" />
-                  </Link>
-                </Button>
-                <Button variant="ghost" size="xl" asChild className="text-primary-foreground hover:bg-primary-foreground/10">
-                  <Link to="/about">Learn More</Link>
-                </Button>
-              </motion.div>
-            </div>
-          </motion.div>
+
+              {/* Background decoration */}
+              <div className="absolute inset-0 overflow-hidden">
+                <motion.div
+                  animate={{ 
+                    x: [0, 100, 0],
+                    y: [0, -50, 0],
+                  }}
+                  transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
+                  className="absolute top-0 right-0 w-96 h-96 bg-white/5 rounded-full blur-3xl"
+                />
+                <motion.div
+                  animate={{ 
+                    x: [0, -100, 0],
+                    y: [0, 50, 0],
+                  }}
+                  transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                  className="absolute bottom-0 left-0 w-96 h-96 bg-accent/10 rounded-full blur-3xl"
+                />
+              </div>
+              
+              <div className="relative z-10">
+                <motion.h2 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  className="text-3xl lg:text-5xl font-bold mb-4"
+                >
+                  Ready to Partner With Us?
+                </motion.h2>
+                <motion.p 
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.1 }}
+                  className="text-primary-foreground/80 max-w-2xl mx-auto mb-8 text-lg"
+                >
+                  Join hundreds of businesses that trust Jaan Distributors for their grocery supply needs.
+                </motion.p>
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="flex flex-col sm:flex-row gap-4 justify-center"
+                >
+                  <motion.div
+                    whileHover={{ scale: 1.05, boxShadow: '0 20px 40px rgba(255, 255, 255, 0.2)' }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button 
+                      variant="accent" 
+                      size="xl" 
+                      asChild 
+                      className="group shadow-lg shadow-accent/30 hover:shadow-accent/50 transition-all"
+                    >
+                      <Link to="/register">
+                        <motion.span
+                          animate={{ x: [0, 3, 0] }}
+                          transition={{ duration: 1.5, repeat: Infinity }}
+                        >
+                          Create Business Account
+                        </motion.span>
+                        <motion.span
+                          className="ml-2"
+                          whileHover={{ x: 5 }}
+                          transition={{ type: "spring", stiffness: 400 }}
+                        >
+                          <ArrowRight className="h-5 w-5" />
+                        </motion.span>
+                      </Link>
+                    </Button>
+                  </motion.div>
+                  
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                  >
+                    <Button 
+                      variant="ghost" 
+                      size="xl" 
+                      asChild 
+                      className="text-primary-foreground hover:bg-primary-foreground/10 group"
+                    >
+                      <Link to="/about">
+                        <motion.span
+                          initial={{ x: 0 }}
+                          whileHover={{ x: 3 }}
+                          transition={{ type: "spring", stiffness: 400 }}
+                        >
+                          Learn More
+                        </motion.span>
+                        <motion.span
+                          className="ml-2 opacity-0 group-hover:opacity-100 transition-opacity"
+                          animate={{ rotate: [0, 10, 0] }}
+                          transition={{ duration: 1, repeat: Infinity }}
+                        >
+                          →
+                        </motion.span>
+                      </Link>
+                    </Button>
+                  </motion.div>
+                </motion.div>
+              </div>
+            </motion.div>
+          </ScrollReveal>
         </div>
       </section>
     </Layout>
