@@ -536,3 +536,40 @@ BEGIN
   RETURN new_number;
 END;
 $$ LANGUAGE plpgsql;
+
+-- ============================================
+-- CONTACT SUBMISSIONS TABLE (B2B Partnership Inquiries)
+-- ============================================
+CREATE TABLE IF NOT EXISTS contact_submissions (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  full_name TEXT NOT NULL,
+  company_name TEXT NOT NULL,
+  business_email TEXT NOT NULL,
+  phone_number TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status VARCHAR(50) DEFAULT 'new',
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT now(),
+  read_at TIMESTAMPTZ
+);
+
+-- Create index on status for filtering
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_status ON contact_submissions(status);
+
+-- Create index on created_at for sorting
+CREATE INDEX IF NOT EXISTS idx_contact_submissions_created_at ON contact_submissions(created_at DESC);
+
+-- Trigger for contact submissions timestamp updates
+CREATE OR REPLACE FUNCTION update_contact_submissions_updated_at()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS update_contact_submissions_updated_at ON contact_submissions;
+CREATE TRIGGER update_contact_submissions_updated_at
+  BEFORE UPDATE ON contact_submissions
+  FOR EACH ROW
+  EXECUTE FUNCTION update_contact_submissions_updated_at();

@@ -1,110 +1,121 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { ShoppingCart, User, Search, Menu, X, Leaf } from 'lucide-react';
+import { User, Search, Menu, X, Leaf } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { useCart } from '@/contexts/CartContext';
 import { useSupabaseAuth } from '@/hooks/useAuth-local';
 import { cn } from '@/lib/utils';
 
 const navLinks = [
   { href: '/', label: 'Home' },
-  { href: '/products', label: 'Products' },
-  { href: '/about', label: 'About' },
-  { href: '/contact', label: 'Contact' },
+  { href: '/products', label: 'Product Catalog' },
+  { href: '/about', label: 'About Us' },
+  { href: '/contact', label: 'Partner With Us' },
 ];
 
 export function Header() {
   const location = useLocation();
-  const { cart, openCart } = useCart();
   const { user, isAdmin } = useSupabaseAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isSearchOpen, setIsSearchOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-border/40 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-      <div className="container-wide">
+    <header className="w-full">
+      <motion.div 
+        className="container-wide py-3 lg:py-4"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+      >
         <div className="flex h-16 items-center justify-between lg:h-20">
-          {/* Logo */}
-          <Link to="/" className="flex items-center gap-2 group">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary text-primary-foreground transition-transform group-hover:scale-105">
+          {/* Premium Logo */}
+          <Link to="/" className="flex items-center gap-3 group">
+            <motion.div 
+              className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-primary to-primary/80 text-primary-foreground shadow-lg shadow-primary/20 transition-all group-hover:scale-110"
+              whileHover={{ rotate: 5 }}
+              transition={{ type: "spring", stiffness: 400 }}
+            >
               <Leaf className="h-6 w-6" />
-            </div>
+            </motion.div>
             <div className="hidden sm:block">
               <span className="text-xl font-bold text-foreground">Jaan</span>
               <span className="text-xl font-bold text-primary"> Distributors</span>
             </div>
           </Link>
 
-          {/* Desktop Navigation */}
+          {/* Premium Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) => (
-              <Link
+            {navLinks.map((link, idx) => (
+              <motion.div
                 key={link.href}
-                to={link.href}
-                className={cn(
-                  "text-sm font-medium transition-colors hover:text-primary relative py-2",
-                  location.pathname === link.href
-                    ? "text-primary"
-                    : "text-muted-foreground"
-                )}
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: idx * 0.1 }}
               >
-                {link.label}
-                {location.pathname === link.href && (
-                  <motion.div
-                    layoutId="nav-indicator"
-                    className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"
-                  />
-                )}
-              </Link>
+                <Link
+                  to={link.href}
+                  className={cn(
+                    "text-sm font-medium transition-colors hover:text-primary relative py-2",
+                    location.pathname === link.href
+                      ? "text-primary"
+                      : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  {link.label}
+                  {location.pathname === link.href && (
+                    <motion.div
+                      layoutId="nav-indicator"
+                      className="absolute bottom-0 left-0 right-0 h-1 bg-gradient-to-r from-primary to-accent rounded-full"
+                    />
+                  )}
+                </Link>
+              </motion.div>
             ))}
           </nav>
 
-          {/* Right Actions */}
+          {/* Right Actions - Premium */}
           <div className="flex items-center gap-2">
             {/* Search Toggle */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsSearchOpen(!isSearchOpen)}
-              className="hidden sm:flex"
-              aria-label="Toggle search"
-            >
-              <Search className="h-5 w-5" />
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setIsSearchOpen(!isSearchOpen)}
+                className="hidden sm:flex hover:bg-secondary/50 rounded-lg"
+                aria-label="Toggle search"
+              >
+                <Search className="h-5 w-5" />
+              </Button>
+            </motion.div>
 
             {/* Account */}
-            <Button
-              variant="ghost"
-              size="icon"
-              asChild
-              aria-label="Account"
-            >
-              <Link to={user ? (isAdmin ? "/admin" : "/account") : "/auth"}>
-                <User className="h-5 w-5" />
-              </Link>
-            </Button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                variant="ghost"
+                size="icon"
+                asChild
+                className="hover:bg-secondary/50 rounded-lg"
+                aria-label="Account"
+              >
+                <Link to={user ? (isAdmin ? "/admin" : "/account") : "/auth"}>
+                  <User className="h-5 w-5" />
+                </Link>
+              </Button>
+            </motion.div>
 
-            {/* Cart */}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={openCart}
-              className="relative"
-              aria-label={`Cart with ${cart.item_count} items`}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cart.item_count > 0 && (
-                <motion.span
-                  initial={{ scale: 0 }}
-                  animate={{ scale: 1 }}
-                  className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground"
-                >
-                  {cart.item_count}
-                </motion.span>
-              )}
-            </Button>
+            {/* Request Demo Button - CTA for B2B */}
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.98 }} className="hidden lg:block">
+              <Button
+                variant="hero"
+                size="sm"
+                asChild
+                className="rounded-lg"
+              >
+                <Link to="/contact">
+                  Request Demo
+                </Link>
+              </Button>
+            </motion.div>
 
             {/* Mobile Menu Toggle */}
             <Button
@@ -143,7 +154,7 @@ export function Header() {
             </motion.div>
           )}
         </AnimatePresence>
-      </div>
+      </motion.div>
 
       {/* Mobile Menu */}
       <AnimatePresence>
@@ -177,7 +188,7 @@ export function Header() {
                     <Input
                       type="search"
                       name="search"
-                      placeholder="Search products..."
+                      placeholder="Search our catalog..."
                       className="w-full pl-10"
                     />
                   </div>

@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useSpring, useTransform } from 'framer-motion';
+import { motion, useMotionValue, useSpring } from 'framer-motion';
 import { useEffect, useRef } from 'react';
 
 export const AnimatedCursor = () => {
@@ -7,7 +7,7 @@ export const AnimatedCursor = () => {
   const cursorScale = useMotionValue(1);
   const cursorOpacity = useMotionValue(0);
 
-  const springConfig = { damping: 30, stiffness: 200, mass: 0.5 };
+  const springConfig = { damping: 12, stiffness: 400, mass: 0.2 };
   const springX = useSpring(cursorX, springConfig);
   const springY = useSpring(cursorY, springConfig);
   const springScale = useSpring(cursorScale, springConfig);
@@ -33,15 +33,15 @@ export const AnimatedCursor = () => {
           y: e.clientY,
         });
 
-        // Keep trail limited to 20 points
-        if (trailRef.current.length > 20) {
+        // Keep trail limited to 30 points
+        if (trailRef.current.length > 30) {
           trailRef.current.shift();
         }
       }
     };
 
     const handleMouseDown = () => {
-      cursorScale.set(0.7);
+      cursorScale.set(0.6);
     };
 
     const handleMouseUp = () => {
@@ -74,51 +74,46 @@ export const AnimatedCursor = () => {
 
   return (
     <>
-      {/* Main cursor blob */}
+      {/* Main cursor - CARROT EMOJI */}
       <motion.div
-        className="pointer-events-none fixed z-[9999] mix-blend-screen"
+        className="pointer-events-none fixed z-[9999] select-none"
         style={{
           left: springX,
           top: springY,
-          x: -12,
-          y: -12,
+          x: -20,
+          y: -20,
           opacity: cursorOpacity,
+          scale: springScale,
         }}
       >
-        {/* Outer glow ring */}
+        {/* Large carrot emoji with glow - pointing DOWN */}
         <motion.div
-          className="absolute inset-0 w-6 h-6 rounded-full border-2 border-primary/40"
+          className="text-2xl filter drop-shadow-lg"
+          style={{ rotate: '90deg' }}
           animate={{
-            boxShadow: [
-              '0 0 10px rgba(var(--color-primary), 0.3), inset 0 0 10px rgba(var(--color-primary), 0.1)',
-              '0 0 20px rgba(var(--color-primary), 0.5), inset 0 0 10px rgba(var(--color-primary), 0.2)',
-              '0 0 10px rgba(var(--color-primary), 0.3), inset 0 0 10px rgba(var(--color-primary), 0.1)',
+            scale: [1, 1.15, 1],
+            filter: [
+              'drop-shadow(0 0 10px rgba(255, 100, 0, 0.6))',
+              'drop-shadow(0 0 20px rgba(255, 100, 0, 0.9))',
+              'drop-shadow(0 0 10px rgba(255, 100, 0, 0.6))',
             ],
           }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
-
-        {/* Inner dot */}
-        <motion.div
-          className="absolute top-1/2 left-1/2 w-1.5 h-1.5 bg-primary rounded-full"
-          style={{ transform: 'translate(-50%, -50%)' }}
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.6, 1, 0.6],
-          }}
-          transition={{ duration: 1.5, repeat: Infinity }}
-        />
+          transition={{ duration: 1.2, repeat: Infinity }}
+        >
+          🥕
+        </motion.div>
       </motion.div>
 
-      {/* Trail particles */}
+      {/* Trail particles - orange/carrot colored */}
       {trailRef.current.map((point, index) => {
-        const opacity = (index / trailRef.current.length) * 0.3;
-        const size = 4 + (index / trailRef.current.length) * 4;
+        const progress = index / trailRef.current.length;
+        const opacity = progress * 0.8;
+        const size = 8 + progress * 12;
 
         return (
           <motion.div
             key={index}
-            className="pointer-events-none fixed w-1 h-1 rounded-full bg-primary/30 mix-blend-screen"
+            className="pointer-events-none fixed rounded-full bg-orange-400 shadow-lg"
             style={{
               left: point.x,
               top: point.y,
@@ -127,13 +122,15 @@ export const AnimatedCursor = () => {
               opacity,
               x: -size / 2,
               y: -size / 2,
+              boxShadow: `0 0 ${size}px rgba(255, 140, 0, 0.8)`,
             }}
             animate={{
               opacity: 0,
               scale: 2,
+              y: [0, 10],
             }}
             transition={{
-              duration: 0.8 + index * 0.05,
+              duration: 0.7 + index * 0.04,
               ease: 'easeOut',
             }}
           />
@@ -143,10 +140,10 @@ export const AnimatedCursor = () => {
       {/* Hide default cursor */}
       <style>{`
         * {
-          cursor: none;
+          cursor: none !important;
         }
         a, button {
-          cursor: none;
+          cursor: none !important;
         }
       `}</style>
     </>

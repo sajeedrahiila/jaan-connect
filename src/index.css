@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Jaan Distributors - Premium Grocery E-commerce Design System */
+/* Jaan Distributors - Premium Luxury Grocery E-commerce Design System */
 
 @layer base {
   :root {
-    /* Core Brand Colors - Deep Forest Green Theme */
-    --background: 120 20% 98%;
-    --foreground: 150 30% 12%;
+    /* Core Brand Colors - Luxury Deep Forest Green Theme */
+    --background: 120 20% 98.5%;
+    --foreground: 150 30% 10%;
 
     --card: 0 0% 100%;
     --card-foreground: 150 30% 12%;
@@ -16,48 +16,50 @@
     --popover: 0 0% 100%;
     --popover-foreground: 150 30% 12%;
 
-    /* Primary: Deep Forest Green */
-    --primary: 150 40% 18%;
+    /* Primary: Deep Luxury Forest Green */
+    --primary: 150 45% 15%;
     --primary-foreground: 80 60% 95%;
 
-    /* Secondary: Light Sage */
-    --secondary: 120 25% 92%;
+    /* Secondary: Premium Sage */
+    --secondary: 120 30% 90%;
     --secondary-foreground: 150 40% 18%;
 
-    /* Muted: Soft Gray-Green */
+    /* Muted: Subtle Gray-Green */
     --muted: 120 15% 94%;
     --muted-foreground: 150 15% 45%;
 
-    /* Accent: Warm Golden Yellow */
-    --accent: 45 95% 55%;
+    /* Accent: Premium Gold */
+    --accent: 45 100% 52%;
     --accent-foreground: 150 40% 12%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 120 20% 88%;
-    --input: 120 20% 88%;
+    --border: 120 20% 92%;
+    --input: 120 20% 92%;
     --ring: 150 40% 25%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    /* Custom Brand Tokens */
+    /* Custom Premium Brand Tokens */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
     --warning: 38 92% 50%;
     --warning-foreground: 0 0% 100%;
 
-    /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(150 40% 18%) 0%, hsl(150 35% 28%) 100%);
-    --gradient-accent: linear-gradient(135deg, hsl(45 95% 55%) 0%, hsl(38 92% 50%) 100%);
-    --gradient-hero: linear-gradient(180deg, hsl(120 25% 92% / 0.8) 0%, hsl(120 20% 98%) 100%);
-    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(120 25% 97%) 100%);
+    /* Premium Gradients */
+    --gradient-primary: linear-gradient(135deg, hsl(150 45% 15%) 0%, hsl(150 40% 22%) 100%);
+    --gradient-accent: linear-gradient(135deg, hsl(45 100% 52%) 0%, hsl(38 95% 50%) 100%);
+    --gradient-hero: linear-gradient(180deg, hsl(120 30% 96% / 0.9) 0%, hsl(120 20% 98%) 100%);
+    --gradient-card: linear-gradient(145deg, hsl(0 0% 100%) 0%, hsl(120 25% 99%) 100%);
+    --gradient-dark: linear-gradient(135deg, hsl(150 45% 15%) 0%, hsl(150 45% 10%) 100%);
 
-    /* Shadows */
-    --shadow-sm: 0 1px 2px 0 hsl(150 30% 12% / 0.05);
-    --shadow-md: 0 4px 6px -1px hsl(150 30% 12% / 0.1), 0 2px 4px -2px hsl(150 30% 12% / 0.1);
-    --shadow-lg: 0 10px 15px -3px hsl(150 30% 12% / 0.1), 0 4px 6px -4px hsl(150 30% 12% / 0.1);
-    --shadow-xl: 0 20px 25px -5px hsl(150 30% 12% / 0.1), 0 8px 10px -6px hsl(150 30% 12% / 0.1);
+    /* Premium Shadows */
+    --shadow-sm: 0 1px 2px 0 hsl(150 30% 12% / 0.06);
+    --shadow-md: 0 4px 12px -2px hsl(150 30% 12% / 0.12), 0 2px 4px -2px hsl(150 30% 12% / 0.08);
+    --shadow-lg: 0 10px 25px -5px hsl(150 30% 12% / 0.15), 0 4px 6px -4px hsl(150 30% 12% / 0.1);
+    --shadow-xl: 0 20px 35px -5px hsl(150 30% 12% / 0.2), 0 8px 10px -6px hsl(150 30% 12% / 0.12);
+    --shadow-premium: 0 15px 40px -8px hsl(150 30% 12% / 0.25), 0 4px 8px -4px hsl(150 30% 12% / 0.08);
     --shadow-glow: 0 0 40px hsl(150 40% 25% / 0.15);
     --shadow-accent: 0 4px 14px 0 hsl(45 95% 55% / 0.4);
 
@@ -187,5 +189,46 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+}
+
+/* Mobile optimizations */
+@media (max-width: 768px) {
+  /* Smooth scrolling on mobile */
+  html {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+
+  /* Prevent text size adjustment on mobile */
+  body {
+    -webkit-text-size-adjust: 100%;
+    -moz-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  /* Improve touch targets */
+  button, a, input, select, textarea {
+    min-height: 44px;
+    min-width: 44px;
+  }
+
+  /* Remove tap highlight */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Optimize font rendering on mobile */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+}
+
+/* Landscape mobile optimizations */
+@media (max-width: 768px) and (orientation: landscape) {
+  /* Reduce header height in landscape */
+  header {
+    min-height: auto;
   }
 }

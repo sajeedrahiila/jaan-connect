@@ -20,6 +20,7 @@ import {
   Warehouse,
   FileText,
   Truck,
+  Mail,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -45,6 +46,7 @@ const navItems = [
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
   { href: '/admin/invoices', icon: FileText, label: 'Invoices' },
   { href: '/admin/purchase-orders', icon: Truck, label: 'Purchase Orders' },
+  { href: '/admin/contact-submissions', icon: Mail, label: 'Contact Inquiries' },
   { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin/activity', icon: Activity, label: 'Activity' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },

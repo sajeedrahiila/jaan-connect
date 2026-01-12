@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import multer from 'multer';
+import compression from 'compression';
 import path from 'path';
 import fs from 'fs';
 import * as auth from './src/lib/auth-local.js';
@@ -10,12 +11,23 @@ import { query } from './src/lib/db.js';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Performance Middleware - Enable compression for 200+ concurrent users
+app.use(compression());
+
+// Request timeout protection
+app.use((req, res, next) => {
+  req.setTimeout(60000); // 60 second timeout
+  res.setTimeout(60000);
+  next();
+});
+
 // Middleware
 app.use(cors({
   origin: 'http://localhost:8080',
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser());
 
 // Static serving for local uploads
@@ -303,6 +315,40 @@ app.get('/api/products/slug/:slug', async (req, res) => {
   } catch (e) {
     console.error('Product slug error', e);
     res.status(500).json({ success: false, error: 'Failed to fetch product' });
+  }
+});
+
+// Public: submit contact form (B2B partnership inquiry)
+app.post('/api/contact', async (req, res) => {
+  try {
+    const { fullName, companyName, businessEmail, phoneNumber, message } = req.body;
+
+    // Validate required fields
+    if (!fullName || !companyName || !businessEmail || !phoneNumber || !message) {
+      return res.status(400).json({ success: false, error: 'All fields are required' });
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(businessEmail)) {
+      return res.status(400).json({ success: false, error: 'Invalid email format' });
+    }
+
+    const result = await query(
+      `INSERT INTO contact_submissions (full_name, company_name, business_email, phone_number, message, status)
+       VALUES ($1, $2, $3, $4, $5, 'new')
+       RETURNING id, full_name, company_name, business_email, phone_number, message, status, created_at`,
+      [fullName, companyName, businessEmail, phoneNumber, message]
+    );
+
+    res.status(201).json({
+      success: true,
+      message: 'Contact submission received. Our team will get back to you shortly.',
+      data: result.rows[0]
+    });
+  } catch (e) {
+    console.error('Contact submission error', e);
+    res.status(500).json({ success: false, error: 'Failed to submit contact form' });
   }
 });
 
@@ -2285,6 +2331,131 @@ app.post('/api/admin/purchase-orders/:id/receive-items', requireAuth, requireAdm
   } catch (e) {
     console.error('Receive items error', e);
     res.status(500).json({ success: false, error: 'Failed to receive items' });
+  }
+});
+
+// Admin: get contact submissions
+app.get('/api/admin/contact-submissions', requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const { status = 'all', page = '1', perPage = '20', search = '' } = req.query;
+    const pageNum = Math.max(1, parseInt(page));
+    const perPageNum = Math.max(1, Math.min(100, parseInt(perPage)));
+    const offset = (pageNum - 1) * perPageNum;
+
+    let where = '';
+    let params: any[] = [];
+
+    if (status && status !== 'all') {
+      where += `WHERE status = $${params.length + 1}`;
+      params.push(status);
+    }
+
+    if (search) {
+      const searchParam = `%${search}%`;
+      if (where) {
+        where += ` AND (full_name ILIKE $${params.length + 1} OR company_name ILIKE $${params.length + 2} OR business_email ILIKE $${params.length + 3})`;
+      } else {
+        where += `WHERE (full_name ILIKE $${params.length + 1} OR company_name ILIKE $${params.length + 2} OR business_email ILIKE $${params.length + 3})`;
+      }
+      params.push(searchParam, searchParam, searchParam);
+    }
+
+    const totalRes = await query(`SELECT COUNT(*)::int AS count FROM contact_submissions ${where}`, params);
+    const submissionsRes = await query(
+      `SELECT id, full_name, company_name, business_email, phone_number, message, status, created_at, updated_at, read_at
+       FROM contact_submissions ${where} ORDER BY created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`,
+      [...params, perPageNum, offset]
+    );
+
+    res.json({
+      success: true,
+      data: {
+        data: submissionsRes.rows,
+        total: totalRes.rows[0].count,
+        page: pageNum,
+        per_page: perPageNum,
+        total_pages: Math.ceil(totalRes.rows[0].count / perPageNum)
+      }
+    });
+  } catch (e) {
+    console.error('Get contact submissions error', e);
+    res.status(500).json({ success: false, error: 'Failed to fetch contact submissions' });
+  }
+});
+
+// Admin: get single contact submission
+app.get('/api/admin/contact-submissions/:id', requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      `SELECT id, full_name, company_name, business_email, phone_number, message, status, created_at, updated_at, read_at
+       FROM contact_submissions WHERE id = $1`,
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: 'Submission not found' });
+    }
+
+    // Mark as read
+    if (!result.rows[0].read_at) {
+      await query(
+        'UPDATE contact_submissions SET read_at = now() WHERE id = $1',
+        [id]
+      );
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (e) {
+    console.error('Get contact submission error', e);
+    res.status(500).json({ success: false, error: 'Failed to fetch submission' });
+  }
+});
+
+// Admin: update contact submission status
+app.put('/api/admin/contact-submissions/:id', requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ['new', 'read', 'in-progress', 'resolved', 'archived'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ success: false, error: 'Invalid status' });
+    }
+
+    const result = await query(
+      `UPDATE contact_submissions SET status = $1, updated_at = now() WHERE id = $2 RETURNING *`,
+      [status, id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: 'Submission not found' });
+    }
+
+    res.json({ success: true, data: result.rows[0] });
+  } catch (e) {
+    console.error('Update contact submission error', e);
+    res.status(500).json({ success: false, error: 'Failed to update submission' });
+  }
+});
+
+// Admin: delete contact submission
+app.delete('/api/admin/contact-submissions/:id', requireAuth, requireAdmin, async (req: any, res: any) => {
+  try {
+    const { id } = req.params;
+    const result = await query(
+      'DELETE FROM contact_submissions WHERE id = $1 RETURNING id',
+      [id]
+    );
+
+    if (!result.rows.length) {
+      return res.status(404).json({ success: false, error: 'Submission not found' });
+    }
+
+    res.json({ success: true, message: 'Submission deleted successfully' });
+  } catch (e) {
+    console.error('Delete contact submission error', e);
+    res.status(500).json({ success: false, error: 'Failed to delete submission' });
   }
 });
 

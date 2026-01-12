@@ -6,9 +6,11 @@ const pool = new Pool({
   database: 'jaan_connect',
   user: 'jaan_admin',
   password: 'jaan_password_2026',
-  max: 20,
+  max: 50,  // Increased for 200+ concurrent users
+  min: 10,  // Maintain minimum connections
   idleTimeoutMillis: 30000,
   connectionTimeoutMillis: 2000,
+  statement_timeout: 60000,  // 60 second statement timeout
 });
 
 export const query = async (text: string, params?: any[]) => {

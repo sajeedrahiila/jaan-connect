@@ -16,6 +16,8 @@ import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
 import ProductDetail from "./pages/ProductDetail";
 import Account from "./pages/Account";
+import About from "./pages/About";
+import Contact from "./pages/Contact";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -33,6 +35,7 @@ import InventoryPage from "./pages/admin/InventoryPage";
 import InvoicesPage from "./pages/admin/InvoicesPage";
 import PurchaseOrdersPage from "./pages/admin/PurchaseOrdersPage";
 import SuppliersPageEnhanced from "./pages/admin/SuppliersPageEnhanced";
+import ContactSubmissionsPage from "./pages/admin/ContactSubmissionsPage";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +50,8 @@ const App = () => (
             <Routes>
               {/* Public Routes */}
               <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
               <Route path="/products" element={<Products />} />
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
@@ -68,6 +73,7 @@ const App = () => (
                 <Route path="customers" element={<CustomersPage />} />
                 <Route path="invoices" element={<InvoicesPage />} />
                 <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
+                <Route path="contact-submissions" element={<ContactSubmissionsPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="activity" element={<ActivityPage />} />
                 <Route path="settings" element={<SettingsPage />} />

@@ -1,38 +1,42 @@
 import { Link } from 'react-router-dom';
 import { motion, useScroll, useTransform, useMotionValue, useSpring } from 'framer-motion';
-import { ArrowRight, Truck, Shield, Clock, Leaf, Star, Users, Package, ChevronRight, Sparkles } from 'lucide-react';
+import { ArrowRight, Truck, Shield, BarChart3, Zap, Users, Package, TrendingUp, CheckCircle, Building2, ChevronRight, Star } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/layout/Layout';
 import { ScrollReveal } from '@/components/ScrollReveal';
 import { useRef, useEffect } from 'react';
 
+// Enterprise B2B focused features
 const features = [
-  { icon: Truck, title: 'Fast Delivery', description: 'Same-day delivery on orders before 2 PM' },
-  { icon: Shield, title: 'Quality Guaranteed', description: 'Fresh products or your money back' },
-  { icon: Clock, title: '24/7 Ordering', description: 'Place orders anytime, anywhere' },
-  { icon: Leaf, title: 'Sustainably Sourced', description: 'Partnering with local farms' },
+  { icon: Truck, title: 'Reliable Supply Chain', description: 'Consistent on-time delivery with real-time tracking and logistics support' },
+  { icon: Shield, title: 'Quality Assurance', description: 'Rigorous sourcing standards and food safety compliance certifications' },
+  { icon: BarChart3, title: 'Strategic Pricing', description: 'Volume-based pricing models with transparent cost structures' },
+  { icon: Zap, title: 'Operational Efficiency', description: 'Streamlined ordering and inventory management solutions' },
 ];
 
+// Product categories for B2B distribution
 const categories = [
   { name: 'Fresh Produce', slug: 'fresh-produce', emoji: '🥬', gradient: 'from-green-400/20 to-emerald-500/20' },
   { name: 'Dairy & Eggs', slug: 'dairy-eggs', emoji: '🥛', gradient: 'from-amber-300/20 to-yellow-400/20' },
   { name: 'Meat & Seafood', slug: 'meat-seafood', emoji: '🥩', gradient: 'from-red-400/20 to-rose-500/20' },
-  { name: 'Pantry Staples', slug: 'pantry-staples', emoji: '🫘', gradient: 'from-orange-400/20 to-amber-500/20' },
+  { name: 'Pantry Staples', slug: 'pantry-staples', emoji: '📦', gradient: 'from-orange-400/20 to-amber-500/20' },
   { name: 'Beverages', slug: 'beverages', emoji: '🧃', gradient: 'from-blue-400/20 to-cyan-500/20' },
-  { name: 'Frozen Foods', slug: 'frozen-foods', emoji: '🧊', gradient: 'from-sky-400/20 to-blue-500/20' },
+  { name: 'Specialty Foods', slug: 'specialty-foods', emoji: '🌾', gradient: 'from-sky-400/20 to-blue-500/20' },
 ];
 
+// B2B enterprise metrics
 const stats = [
-  { value: '500+', label: 'Business Partners', icon: Users },
-  { value: '10K+', label: 'Products', icon: Package },
-  { value: '99%', label: 'Satisfaction Rate', icon: Star },
-  { value: '24/7', label: 'Support Available', icon: Clock },
+  { value: '500+', label: 'Retail & Restaurant Partners', icon: Building2 },
+  { value: '10K+', label: 'Products In Catalog', icon: Package },
+  { value: '99.2%', label: 'Order Fulfillment Rate', icon: CheckCircle },
+  { value: '20+', label: 'Years Industry Experience', icon: TrendingUp },
 ];
 
+// B2B testimonials from retail partners
 const testimonials = [
-  { name: 'Sarah Chen', role: 'Restaurant Owner', text: 'Jaan Distributors transformed our supply chain. Fresh products, always on time.', rating: 5 },
-  { name: 'Michael Roberts', role: 'Grocery Store Manager', text: 'The best wholesale partner we\'ve ever worked with. Exceptional quality and service.', rating: 5 },
-  { name: 'Priya Sharma', role: 'Café Owner', text: 'Their produce is always fresh and prices are unbeatable. Highly recommend!', rating: 5 },
+  { name: 'James Whitmore', role: 'Regional Store Manager, Premium Grocers', text: 'Jaan Distributors has been instrumental in optimizing our supply chain. Their reliability and product quality have reduced our operational costs significantly.', rating: 5 },
+  { name: 'Neha Kapoor', role: 'Operations Director, Restaurant Group', text: 'The partnership with Jaan has transformed our procurement process. Exceptional service and competitive pricing for volume purchases.', rating: 5 },
+  { name: 'David Chen', role: 'Purchasing Manager, Hospitality Chain', text: 'Professional service, consistent quality, and flexible delivery schedules. This is the kind of partner every business needs.', rating: 5 },
 ];
 
 const containerVariants = {
@@ -117,7 +121,7 @@ const Index = () => {
   return (
     <Layout>
       {/* Hero Section */}
-      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-b from-secondary via-secondary/50 to-background py-20 lg:py-32">
+      <section ref={heroRef} className="relative overflow-hidden bg-gradient-to-b from-secondary via-secondary/50 to-background py-12 sm:py-16 lg:py-20 xl:py-32">
         {/* Animated background elements */}
         <div className="absolute inset-0 overflow-hidden">
           {/* Large rotating orb */}
@@ -130,7 +134,7 @@ const Index = () => {
               rotate: { duration: 80, repeat: Infinity, ease: "linear" },
               scale: { duration: 12, repeat: Infinity, ease: "easeInOut" }
             }}
-            className="absolute -top-1/3 -right-1/4 w-[800px] h-[800px] rounded-full bg-gradient-to-br from-primary/8 via-accent/5 to-transparent blur-3xl"
+            className="absolute -top-1/3 -right-1/4 w-[600px] sm:w-[800px] h-[600px] sm:h-[800px] rounded-full bg-gradient-to-br from-primary/8 via-accent/5 to-transparent blur-3xl"
           />
           
           {/* Pulsing orb */}
@@ -186,7 +190,7 @@ const Index = () => {
                 animate={{ opacity: 1, scale: 1, y: 0 }}
                 transition={{ delay: 0.2, duration: 0.6, type: "spring", stiffness: 100 }}
                 whileHover={{ scale: 1.05 }}
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-primary text-sm font-medium mb-6 backdrop-blur-sm hover:border-primary/40 transition-colors"
+                className="inline-flex items-center gap-2 px-3 sm:px-4 py-2 rounded-full bg-gradient-to-r from-primary/10 to-accent/10 border border-primary/20 text-primary text-xs sm:text-sm font-medium mb-4 sm:mb-6 backdrop-blur-sm hover:border-primary/40 transition-colors"
               >
                 <motion.span
                   animate={{ scale: [1, 1.2, 1] }}
@@ -196,7 +200,7 @@ const Index = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </motion.span>
-                <span>Wholesale Grocery Distribution</span>
+                <span className="whitespace-nowrap">Enterprise B2B Distribution</span>
               </motion.span>
               
               {/* Animated heading with text reveal */}
@@ -205,7 +209,7 @@ const Index = () => {
                   initial={{ opacity: 0, y: 40 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3, duration: 0.7, type: "spring" }}
-                  className="text-4xl sm:text-5xl lg:text-6xl xl:text-7xl font-bold leading-[1.1] mb-6"
+                  className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight sm:leading-[1.1] mb-4 sm:mb-6"
                 >
                   <motion.span 
                     className="block"
@@ -213,15 +217,15 @@ const Index = () => {
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.4 }}
                   >
-                    Quality Groceries,
+                    Strategic Wholesale
                   </motion.span>
                   <motion.span 
-                    className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary mt-2"
+                    className="block text-transparent bg-clip-text bg-gradient-to-r from-primary via-accent to-primary mt-1 sm:mt-2"
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.5 }}
                   >
-                    Delivered Fresh
+                    Partnership & Supply
                   </motion.span>
                 </motion.h1>
               </motion.div>
@@ -231,9 +235,9 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.6, duration: 0.6 }}
-                className="text-lg lg:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8 leading-relaxed"
+                className="text-base sm:text-lg lg:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-6 sm:mb-8 leading-relaxed px-2 sm:px-0"
               >
-                Your trusted wholesale partner for premium grocery products. Competitive prices, reliable delivery, and exceptional service for businesses of all sizes.
+                Jaan Distributors is the trusted partner for retail chains, restaurants, and food service operators. We provide consistent supply of quality products with operational excellence and competitive wholesale pricing.
               </motion.p>
               
               {/* CTA Buttons with enhanced interactions */}
@@ -241,19 +245,20 @@ const Index = () => {
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.7, duration: 0.6 }}
-                className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start"
+                className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center lg:justify-start px-4 sm:px-0"
               >
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto"
                 >
-                  <Button variant="hero" size="xl" asChild className="group shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-shadow">
+                  <Button variant="hero" size="xl" asChild className="group shadow-lg shadow-primary/30 hover:shadow-primary/50 transition-shadow w-full sm:w-auto">
                     <Link to="/products">
                       <motion.span
                         animate={{ x: [0, 5, 0] }}
                         transition={{ duration: 1.5, repeat: Infinity }}
                       >
-                        Shop Now
+                        View Catalog
                       </motion.span>
                       <motion.span
                         className="ml-2"
@@ -270,20 +275,21 @@ const Index = () => {
                 <motion.div
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.98 }}
+                  className="w-full sm:w-auto"
                 >
-                  <Button variant="hero-outline" size="xl" asChild className="group hover:shadow-lg transition-shadow">
+                  <Button variant="hero-outline" size="xl" asChild className="group hover:shadow-lg transition-shadow w-full sm:w-auto">
                     <Link to="/contact">
                       <motion.span
                         className="flex items-center gap-2"
                         initial={{ x: 0 }}
                         whileHover={{ x: 3 }}
                       >
-                        Contact Sales
+                        Request Partnership
                         <motion.span
                           animate={{ opacity: [0, 1, 0] }}
                           transition={{ duration: 2, repeat: Infinity }}
                         >
-                          <Sparkles className="h-4 w-4" />
+                          <ArrowRight className="h-4 w-4" />
                         </motion.span>
                       </motion.span>
                     </Link>
@@ -304,19 +310,19 @@ const Index = () => {
                   transition={{ delay: 1 }}
                   className="text-sm text-muted-foreground mb-4"
                 >
-                  Trusted by 500+ businesses
+                  Trusted by leading retail and food service enterprises
                 </motion.p>
                 <div className="flex items-center justify-center lg:justify-start gap-6 flex-wrap">
-                  {[1, 2, 3, 4].map((i) => (
+                  {['Retail Chains', 'Restaurants', 'Hospitality', 'Catering'].map((label, i) => (
                     <motion.div
-                      key={i}
+                      key={label}
                       initial={{ opacity: 0, scale: 0.6, y: 10 }}
                       animate={{ opacity: 1, scale: 1, y: 0 }}
                       transition={{ delay: 1.1 + i * 0.08, type: "spring", stiffness: 200 }}
                       whileHover={{ scale: 1.08, y: -3 }}
-                      className="h-8 w-16 rounded bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center text-xs text-muted-foreground font-medium hover:border-primary/20 border border-transparent transition-colors"
+                      className="px-3 py-2 rounded bg-gradient-to-br from-muted to-muted/50 flex items-center justify-center text-xs text-muted-foreground font-medium hover:border-primary/20 border border-transparent transition-colors whitespace-nowrap"
                     >
-                      Partner {i}
+                      {label}
                     </motion.div>
                   ))}
                 </div>
@@ -328,8 +334,7 @@ const Index = () => {
               initial={{ opacity: 0, scale: 0.85, y: 40 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ duration: 0.8, delay: 0.4, type: "spring", stiffness: 100 }}
-              className="relative"
-              style={{ y: springY }}
+              className="relative px-4 sm:px-0"
             >
               <motion.div
                 animate={{ 
@@ -340,48 +345,45 @@ const Index = () => {
                   rotate: { duration: 30, repeat: Infinity, ease: "linear" },
                   scale: { duration: 8, repeat: Infinity, ease: "easeInOut" }
                 }}
-                className="absolute -inset-8 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-transparent blur-2xl"
+                className="absolute -inset-4 sm:-inset-8 rounded-2xl bg-gradient-to-br from-primary/10 via-accent/5 to-transparent blur-2xl"
               />
               
-              <div className="relative grid grid-cols-2 sm:grid-cols-3 gap-4 z-10">
+              <div className="relative grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 z-10">
                 {categories.map((cat, i) => (
                   <motion.div
                     key={cat.slug}
                     initial={{ opacity: 0, y: 30, scale: 0.8 }}
                     animate={{ opacity: 1, y: 0, scale: 1 }}
                     transition={{ delay: 0.5 + i * 0.08, duration: 0.5, type: "spring" }}
-                    whileHover={{ scale: 1.1, y: -8 }}
+                    whileHover={{ scale: 1.05, y: -4 }}
                     whileTap={{ scale: 0.95 }}
-                    variants={floatingVariants}
-                    initial="initial"
-                    animate="animate"
                     className="group"
                   >
                     <Link 
                       to={`/products?category=${cat.slug}`}
-                      className={`block rounded-2xl bg-gradient-to-br ${cat.gradient} backdrop-blur-md border border-border/50 p-5 text-center hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 relative overflow-hidden`}
+                      className={`flex flex-col items-center justify-center rounded-2xl bg-gradient-to-br ${cat.gradient} backdrop-blur-md border border-border/50 p-4 sm:p-6 text-center hover:border-primary/50 hover:shadow-xl hover:shadow-primary/20 transition-all duration-300 relative overflow-hidden min-h-[120px] sm:min-h-[140px]`}
                     >
-                      {/* Shimmer effect on hover */}
+                      {/* Shimmer effect on hover - desktop only */}
                       <motion.div
-                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent"
+                        className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent hidden sm:block"
                         initial={{ x: '-100%' }}
                         whileHover={{ x: '100%' }}
                         transition={{ duration: 0.6 }}
                       />
                       
                       <motion.span 
-                        className="text-4xl mb-2 block group-hover:scale-125 transition-transform"
-                        whileHover={{ rotate: [0, -15, 15, 0] }}
+                        className="text-3xl sm:text-4xl mb-2 block transition-transform"
+                        whileHover={{ rotate: [0, -10, 10, 0] }}
                         transition={{ duration: 0.5 }}
                       >
                         {cat.emoji}
                       </motion.span>
-                      <span className="text-sm font-semibold text-foreground relative z-10">{cat.name}</span>
+                      <span className="text-xs sm:text-sm font-semibold text-foreground relative z-10 leading-tight px-1">{cat.name}</span>
                       <motion.div
                         initial={{ opacity: 0, x: -5 }}
                         whileHover={{ opacity: 1, x: 0 }}
                         transition={{ duration: 0.3 }}
-                        className="h-4 w-4 mx-auto mt-2 text-primary"
+                        className="h-4 w-4 mx-auto mt-1 sm:mt-2 text-primary hidden sm:block"
                       >
                         <ChevronRight className="h-4 w-4" />
                       </motion.div>
@@ -453,8 +455,8 @@ const Index = () => {
 
         <div className="container-wide relative z-10">
           <ScrollReveal direction="down" className="text-center mb-14">
-            <span className="text-primary font-semibold text-sm uppercase tracking-wider">Why Choose Us</span>
-            <h2 className="text-3xl lg:text-4xl font-bold mt-2">Built for Business Success</h2>
+            <span className="text-primary font-semibold text-sm uppercase tracking-wider">Operational Excellence</span>
+            <h2 className="text-3xl lg:text-4xl font-bold mt-2">Enterprise Solutions Built for Scale</h2>
           </ScrollReveal>
           
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 lg:gap-8">
@@ -521,8 +523,8 @@ const Index = () => {
 
         <div className="container-wide relative z-10">
           <ScrollReveal direction="down" className="text-center mb-14">
-            <span className="text-primary font-semibold text-sm uppercase tracking-wider">Testimonials</span>
-            <h2 className="text-3xl lg:text-4xl font-bold mt-2">What Our Partners Say</h2>
+            <span className="text-primary font-semibold text-sm uppercase tracking-wider">Partner Success</span>
+            <h2 className="text-3xl lg:text-4xl font-bold mt-2">Trusted by Leading Businesses</h2>
           </ScrollReveal>
           
           <div className="grid md:grid-cols-3 gap-6">
@@ -591,6 +593,180 @@ const Index = () => {
       {/* CTA Section */}
       <section className="py-20 lg:py-28 relative overflow-hidden">
         <div className="container-wide relative z-10">
+          {/* About Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mb-20 lg:mb-28 py-16 sm:py-20 lg:py-24 bg-secondary/30 rounded-3xl p-8 lg:p-16"
+          >
+            <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+              <div>
+                <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-6">About Jaan Distributers</h2>
+                <div className="space-y-4 text-muted-foreground text-lg leading-relaxed">
+                  <p>
+                    Jaan Distributers is a professional wholesale and retail distribution company serving supermarkets, retail chains, and independent retailers.
+                  </p>
+                  <p>
+                    We operate with a focus on consistency, operational discipline, and long-term partnerships—ensuring our clients receive dependable supply aligned with their business needs.
+                  </p>
+                </div>
+                <motion.div
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: 0.2 }}
+                  className="mt-8 pt-8 border-t border-border"
+                >
+                  <Button asChild size="lg" className="bg-primary hover:bg-primary/90">
+                    <Link to="/about" className="flex items-center gap-2">
+                      Learn More About Us
+                      <ArrowRight className="h-5 w-5" />
+                    </Link>
+                  </Button>
+                </motion.div>
+              </div>
+
+              <motion.div
+                variants={containerVariants}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true }}
+                className="grid grid-cols-2 gap-6"
+              >
+                <motion.div variants={itemVariants} className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="text-3xl font-bold text-primary mb-2">20+</div>
+                  <p className="text-muted-foreground text-sm">Years Industry Experience</p>
+                </motion.div>
+                <motion.div variants={itemVariants} className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="text-3xl font-bold text-primary mb-2">500+</div>
+                  <p className="text-muted-foreground text-sm">Active Retail Partners</p>
+                </motion.div>
+                <motion.div variants={itemVariants} className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="text-3xl font-bold text-primary mb-2">99.2%</div>
+                  <p className="text-muted-foreground text-sm">Order Fulfillment Rate</p>
+                </motion.div>
+                <motion.div variants={itemVariants} className="p-6 rounded-xl bg-card border border-border hover:border-primary/50 transition-colors">
+                  <div className="text-3xl font-bold text-primary mb-2">10K+</div>
+                  <p className="text-muted-foreground text-sm">Products In Catalog</p>
+                </motion.div>
+              </motion.div>
+            </div>
+          </motion.div>
+
+          {/* Distribution Capabilities Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mb-20 lg:mb-28"
+          >
+            <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12 lg:mb-16">
+              <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">Our Distribution Capabilities</motion.h2>
+              <motion.p variants={itemVariants} className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Enterprise-grade distribution infrastructure designed for modern retail operations
+              </motion.p>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid md:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+              {[
+                { icon: Truck, title: 'Supply Chain Reliability', description: 'Structured logistics and consistent fulfillment across retail channels.' },
+                { icon: Building2, title: 'Retail-Centric Operations', description: 'Processes designed to meet supermarket and enterprise retail standards.' },
+                { icon: BarChart3, title: 'Scalable Distribution', description: 'Ability to support growing retail networks with efficiency and control.' },
+                { icon: Shield, title: 'Quality & Compliance', description: 'Products sourced and handled to meet quality and operational expectations.' }
+              ].map((capability, i) => {
+                const IconComponent = capability.icon;
+                return (
+                  <motion.div
+                    key={i}
+                    variants={itemVariants}
+                    className="p-6 rounded-xl border border-border bg-card hover:border-primary/50 hover:bg-accent/5 transition-all group"
+                  >
+                    <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4 group-hover:bg-primary/20 transition-colors">
+                      <IconComponent className="h-6 w-6 text-primary" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-foreground mb-2">{capability.title}</h3>
+                    <p className="text-muted-foreground text-sm">{capability.description}</p>
+                  </motion.div>
+                );
+              })}
+            </motion.div>
+          </motion.div>
+
+          {/* Industries We Serve */}
+          <motion.div
+            initial={{ opacity: 0, y: 40 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.6 }}
+            className="mb-20 lg:mb-28 py-16 sm:py-20 lg:py-24 bg-secondary/30 rounded-3xl p-8 lg:p-16"
+          >
+            <motion.div variants={containerVariants} initial="hidden" whileInView="visible" viewport={{ once: true }} className="text-center mb-12 lg:mb-16">
+              <motion.h2 variants={itemVariants} className="text-3xl sm:text-4xl lg:text-5xl font-bold text-foreground mb-4">Industries We Serve</motion.h2>
+              <motion.p variants={itemVariants} className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                Strategic distribution solutions for diverse retail and food service sectors
+              </motion.p>
+            </motion.div>
+
+            <motion.div
+              variants={containerVariants}
+              initial="hidden"
+              whileInView="visible"
+              viewport={{ once: true }}
+              className="grid sm:grid-cols-2 lg:grid-cols-4 gap-6"
+            >
+              {['Supermarket Chains', 'Organized Retail', 'Local & Regional Retailers', 'Independent Stores'].map((industry, i) => (
+                <motion.div
+                  key={i}
+                  variants={itemVariants}
+                  className="p-8 rounded-xl border border-border bg-card hover:border-primary/50 text-center group cursor-pointer"
+                >
+                  <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4 group-hover:bg-primary/20 transition-colors">
+                    <Users className="h-8 w-8 text-primary" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-foreground">{industry}</h3>
+                </motion.div>
+              ))}
+            </motion.div>
+          </motion.div>
+
+          {/* Enterprise CTA Strip */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            className="mb-20 lg:mb-28 py-12 sm:py-16 bg-gradient-to-r from-primary to-accent text-primary-foreground rounded-3xl"
+          >
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-6 px-8">
+              <div>
+                <h3 className="text-xl sm:text-2xl font-bold">A dependable distribution partner built for retail scale.</h3>
+              </div>
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+              >
+                <Button 
+                  asChild 
+                  size="lg" 
+                  className="bg-primary-foreground text-primary hover:bg-primary-foreground/90 font-medium"
+                >
+                  <Link to="/contact" className="flex items-center gap-2">
+                    Connect With Us
+                    <ArrowRight className="h-5 w-5" />
+                  </Link>
+                </Button>
+              </motion.div>
+            </div>
+          </motion.div>
+
           <ScrollReveal scale={0.95}>
             <motion.div
               initial={{ opacity: 0, scale: 0.95 }}
