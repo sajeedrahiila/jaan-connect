@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { Loader2, Upload, X, ImagePlus } from 'lucide-react';
+import { Loader2, Upload, X, ImagePlus, Barcode } from 'lucide-react';
 import {
   Dialog,
   DialogContent,
@@ -60,7 +60,7 @@ interface ProductDialogProps {
     isNew?: boolean;
     images?: string[];
   };
-  onSubmit: (data: ProductFormData) => Promise<void>;
+  onSubmit: (data: ProductFormData & { images?: string[] }) => Promise<void>;
 }
 
 const categories = [
@@ -73,6 +73,8 @@ const categories = [
   'Snacks',
   'Canned Goods',
 ];
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export function ProductDialog({ open, onOpenChange, mode, product, onSubmit }: ProductDialogProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,6 +93,7 @@ export function ProductDialog({ open, onOpenChange, mode, product, onSubmit }: P
     defaultValues: {
       name: product?.name || '',
       sku: product?.sku || '',
+      barcode: '',
       price: product?.price?.toString() || '',
       comparePrice: product?.comparePrice?.toString() || '',
       category: product?.category || '',
@@ -106,10 +109,36 @@ export function ProductDialog({ open, onOpenChange, mode, product, onSubmit }: P
   const isFeatured = watch('isFeatured');
   const isNew = watch('isNew');
 
+  const generateBarcode = () => {
+    // Generate EAN-13 format barcode
+    const prefix = '200'; // 200-299 for internal use
+    const randomDigits = Math.floor(Math.random() * 1000000000).toString().padStart(9, '0');
+    const barcode12 = prefix + randomDigits;
+    
+    // Calculate check digit
+    let sumOdd = 0;
+    let sumEven = 0;
+    for (let i = 0; i < 12; i++) {
+      if (i % 2 === 0) {
+        sumOdd += parseInt(barcode12[i]);
+      } else {
+        sumEven += parseInt(barcode12[i]);
+      }
+    }
+    const checkDigit = (10 - ((sumOdd + (sumEven * 3)) % 10)) % 10;
+    const fullBarcode = barcode12 + checkDigit.toString();
+    
+    setValue('barcode', fullBarcode);
+    toast({
+      title: 'Barcode generated',
+      description: `Generated barcode: ${fullBarcode}`,
+    });
+  };
+
   const handleFormSubmit = async (data: ProductFormData) => {
     setIsSubmitting(true);
     try {
-      await onSubmit(data);
+      await onSubmit({ ...data, images });
       toast({
         title: mode === 'create' ? 'Product created' : 'Product updated',
         description: `${data.name} has been ${mode === 'create' ? 'created' : 'updated'} successfully.`,
@@ -127,10 +156,32 @@ export function ProductDialog({ open, onOpenChange, mode, product, onSubmit }: P
     }
   };
 
-  const handleImageUpload = () => {
-    // Mock image upload - in real app, this would upload to storage
-    const mockImage = `https://picsum.photos/400/400?random=${Date.now()}`;
-    setImages([...images, mockImage]);
+  const handleFileChange = async (e: any) => {
+    const files = e.target.files as FileList | null;
+    if (!files || !files.length) return;
+    const formData = new FormData();
+    Array.from(files).forEach((f) => formData.append('files', f));
+    try {
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/uploads`, {
+        method: 'POST',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: formData,
+      });
+      const data = await res.json();
+      if (!res.ok || !data.success) throw new Error('Upload failed');
+      setImages([...images, ...data.data.urls]);
+      e.target.value = '';
+    } catch {
+      toast({
+        title: 'Upload failed',
+        description: 'Could not upload images',
+        variant: 'destructive',
+      });
+    }
   };
 
   const removeImage = (index: number) => {
@@ -170,14 +221,17 @@ export function ProductDialog({ open, onOpenChange, mode, product, onSubmit }: P
                   </button>
                 </div>
               ))}
-              <button
-                type="button"
-                onClick={handleImageUpload}
-                className="h-20 w-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors"
-              >
+              <label className="h-20 w-20 border-2 border-dashed rounded-lg flex flex-col items-center justify-center text-muted-foreground hover:border-primary hover:text-primary transition-colors cursor-pointer">
+                <input
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
                 <ImagePlus className="h-6 w-6" />
                 <span className="text-xs mt-1">Add</span>
-              </button>
+              </label>
             </div>
           </div>
 
@@ -201,6 +255,26 @@ export function ProductDialog({ open, onOpenChange, mode, product, onSubmit }: P
                 <p className="text-sm text-destructive">{errors.sku.message}</p>
               )}
             </div>
+          </div>
+
+          {/* Barcode */}
+          <div className="space-y-2">
+            <Label htmlFor="barcode">Barcode (EAN-13)</Label>
+            <div className="flex gap-2">
+              <Input
+                id="barcode"
+                {...register('barcode')}
+                placeholder="e.g., 2001234567890"
+                className="font-mono"
+              />
+              <Button type="button" variant="outline" onClick={generateBarcode}>
+                <Barcode className="h-4 w-4 mr-2" />
+                Generate
+              </Button>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Leave empty to generate automatically, or enter a custom barcode
+            </p>
           </div>
 
           {/* Pricing */}

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -40,7 +40,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { ProductDialog } from '@/components/admin/ProductDialog';
+import { EnhancedProductDialog } from '@/components/admin/EnhancedProductDialog';
 import { useToast } from '@/hooks/use-toast';
 
 // Product type definition
@@ -61,82 +61,34 @@ interface Product {
   images?: string[];
 }
 
-// Mock products data - in a real app this would come from the database
-const initialProducts: Product[] = [
-  {
-    id: 1,
-    name: 'Organic Whole Wheat Flour',
-    sku: 'FLR-001',
-    price: 45.00,
-    stock: 250,
-    category: 'Grains',
-    status: 'active',
-    description: 'Premium organic whole wheat flour, perfect for baking healthy breads and pastries.',
-    unit: 'kg',
-    weight: 5,
-    isFeatured: true,
-    isNew: false,
-  },
-  {
-    id: 2,
-    name: 'Premium Basmati Rice (25kg)',
-    sku: 'RIC-002',
-    price: 89.99,
-    stock: 180,
-    category: 'Grains',
-    status: 'active',
-    description: 'Long-grain premium basmati rice imported from India. Perfect for biryanis and pilafs.',
-    unit: 'bag',
-    weight: 25,
-    isFeatured: false,
-    isNew: true,
-  },
-  {
-    id: 3,
-    name: 'Cold Pressed Coconut Oil',
-    sku: 'OIL-003',
-    price: 24.50,
-    stock: 0,
-    category: 'Cooking Oils',
-    status: 'out_of_stock',
-    description: 'Pure cold-pressed virgin coconut oil for cooking and health benefits.',
-    unit: 'L',
-    weight: 1,
-    isFeatured: false,
-    isNew: false,
-  },
-  {
-    id: 4,
-    name: 'Organic Honey (500g)',
-    sku: 'HON-004',
-    price: 18.99,
-    stock: 75,
-    category: 'Sweeteners',
-    status: 'active',
-    description: 'Raw organic honey sourced from local beekeepers. Unprocessed and full of nutrients.',
-    unit: 'jar',
-    weight: 0.5,
-    isFeatured: true,
-    isNew: false,
-  },
-  {
-    id: 5,
-    name: 'Green Tea Premium Pack',
-    sku: 'TEA-005',
-    price: 32.00,
-    stock: 15,
-    category: 'Beverages',
-    status: 'low_stock',
-    description: 'Premium Japanese green tea leaves for a refreshing and healthy beverage.',
-    unit: 'box',
-    weight: 0.25,
-    isFeatured: false,
-    isNew: true,
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>(initialProducts);
+  const [products, setProducts] = useState<Product[]>([]);
+    useEffect(() => {
+      const fetchProducts = async () => {
+        const res = await fetch(`${API_URL}/api/products`);
+        const data = await res.json();
+        if (data.success && data.data) {
+          const mapped = (data.data.data as any[]).map(p => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            price: p.price,
+            stock: p.stock_quantity,
+            category: p.category_name,
+            status: p.stock_status,
+            description: p.description,
+            unit: p.unit,
+            weight: p.weight,
+            isFeatured: p.is_featured,
+            isNew: p.is_new,
+          }));
+          setProducts(mapped);
+        }
+      };
+      fetchProducts();
+    }, []);
   const [searchQuery, setSearchQuery] = useState('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [dialogMode, setDialogMode] = useState<'create' | 'edit'>('create');
@@ -197,60 +149,121 @@ export default function ProductsPage() {
 
   const handleConfirmDelete = () => {
     if (productToDelete) {
-      setProducts(products.filter((p) => p.id !== productToDelete.id));
-      toast({
-        title: 'Product deleted',
-        description: `${productToDelete.name} has been removed.`,
-      });
-      setDeleteDialogOpen(false);
-      setProductToDelete(null);
+      const token = localStorage.getItem('session_token');
+      fetch(`${API_URL}/api/admin/products/${productToDelete.id}`, {
+        method: 'DELETE',
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      })
+        .then(async (res) => {
+          if (!res.ok) throw new Error('Failed to delete');
+          toast({
+            title: 'Product deleted',
+            description: `${productToDelete.name} has been removed.`,
+          });
+          // Refresh list
+          const listRes = await fetch(`${API_URL}/api/products`);
+          const listData = await listRes.json();
+          if (listData.success && listData.data) {
+            const mapped = (listData.data.data as any[]).map(p => ({
+              id: p.id,
+              name: p.name,
+              sku: p.sku,
+              price: p.price,
+              stock: p.stock_quantity,
+              category: p.category_name,
+              status: p.stock_status,
+              description: p.description,
+              unit: p.unit,
+              weight: p.weight,
+              isFeatured: p.is_featured,
+              isNew: p.is_new,
+            }));
+            setProducts(mapped);
+          }
+        })
+        .catch(() => {
+          toast({
+            title: 'Error',
+            description: 'Failed to delete product.',
+            variant: 'destructive',
+          });
+        })
+        .finally(() => {
+          setDeleteDialogOpen(false);
+          setProductToDelete(null);
+        });
     }
   };
 
   const handleSubmitProduct = async (data: any) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    // Create via API
+    const token = localStorage.getItem('session_token');
+    const res = await fetch(`${API_URL}/api/admin/products`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      credentials: 'include',
+      body: JSON.stringify(data),
+    });
+    if (!res.ok) throw new Error('Failed to create product');
+    // Refresh list
+    const listRes = await fetch(`${API_URL}/api/products`);
+    const listData = await listRes.json();
+    if (listData.success && listData.data) {
+      const mapped = (listData.data.data as any[]).map(p => ({
+        id: p.id,
+        name: p.name,
+        sku: p.sku,
+        price: p.price,
+        stock: p.stock_quantity,
+        category: p.category_name,
+        status: p.stock_status,
+        description: p.description,
+        unit: p.unit,
+        weight: p.weight,
+        isFeatured: p.is_featured,
+        isNew: p.is_new,
+      }));
+      setProducts(mapped);
+    }
 
-    if (dialogMode === 'create') {
-      const newProduct: Product = {
-        id: Math.max(...products.map((p) => p.id)) + 1,
-        name: data.name,
-        sku: data.sku,
-        price: parseFloat(data.price),
-        comparePrice: data.comparePrice ? parseFloat(data.comparePrice) : undefined,
-        stock: parseInt(data.stock),
-        category: data.category,
-        status: parseInt(data.stock) === 0 ? 'out_of_stock' : parseInt(data.stock) < 20 ? 'low_stock' : 'active',
-        description: data.description,
-        unit: data.unit,
-        weight: data.weight ? parseFloat(data.weight) : undefined,
-        isFeatured: data.isFeatured,
-        isNew: data.isNew,
-      };
-      setProducts([...products, newProduct]);
-    } else if (selectedProduct) {
-      const stock = parseInt(data.stock);
-      setProducts(
-        products.map((p) =>
-          p.id === selectedProduct.id
-            ? {
-                ...p,
-                name: data.name,
-                sku: data.sku,
-                price: parseFloat(data.price),
-                comparePrice: data.comparePrice ? parseFloat(data.comparePrice) : undefined,
-                stock: stock,
-                category: data.category,
-                status: stock === 0 ? 'out_of_stock' : stock < 20 ? 'low_stock' : 'active',
-                description: data.description,
-                unit: data.unit,
-                weight: data.weight ? parseFloat(data.weight) : undefined,
-                isFeatured: data.isFeatured,
-                isNew: data.isNew,
-              }
-            : p
-        )
-      );
+    if (dialogMode === 'edit' && selectedProduct) {
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/products/${selectedProduct.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Failed to update product');
+      // Refresh list
+      const listRes = await fetch(`${API_URL}/api/products`);
+      const listData = await listRes.json();
+      if (listData.success && listData.data) {
+        const mapped = (listData.data.data as any[]).map(p => ({
+          id: p.id,
+          name: p.name,
+          sku: p.sku,
+          price: p.price,
+          stock: p.stock_quantity,
+          category: p.category_name,
+          status: p.stock_status,
+          description: p.description,
+          unit: p.unit,
+          weight: p.weight,
+          isFeatured: p.is_featured,
+          isNew: p.is_new,
+        }));
+        setProducts(mapped);
+      }
     }
   };
 
@@ -431,7 +444,7 @@ export default function ProductsPage() {
       </Card>
 
       {/* Product Dialog */}
-      <ProductDialog
+      <EnhancedProductDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         mode={dialogMode}

@@ -16,7 +16,7 @@ import type {
 } from './types';
 
 // API Base URL - Configure in environment
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 // Mock data for development
 const mockCategories: Category[] = [
@@ -264,8 +264,9 @@ const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
  * Odoo endpoint: GET /api/categories
  */
 export async function getCategories(): Promise<ApiResponse<Category[]>> {
-  await delay(300);
-  return { success: true, data: mockCategories };
+  const res = await fetch(`${API_BASE_URL}/api/categories`);
+  const data = await res.json();
+  return data;
 }
 
 /**
@@ -274,10 +275,11 @@ export async function getCategories(): Promise<ApiResponse<Category[]>> {
  * Odoo endpoint: GET /api/categories/{slug}
  */
 export async function getCategoryBySlug(slug: string): Promise<ApiResponse<Category>> {
-  await delay(200);
-  const category = mockCategories.find(c => c.slug === slug);
-  if (category) {
-    return { success: true, data: category };
+  const res = await fetch(`${API_BASE_URL}/api/categories`);
+  const data = await res.json();
+  if (data.success && data.data) {
+    const category = (data.data as Category[]).find(c => c.slug === slug);
+    if (category) return { success: true, data: category };
   }
   return { success: false, error: 'Category not found' };
 }
@@ -292,67 +294,19 @@ export async function getCategoryBySlug(slug: string): Promise<ApiResponse<Categ
  * Odoo endpoint: GET /api/products
  */
 export async function getProducts(filters?: ProductFilters): Promise<ApiResponse<PaginatedResponse<Product>>> {
-  await delay(400);
-  
-  let filtered = [...mockProducts];
-  
-  if (filters?.category_id) {
-    filtered = filtered.filter(p => p.category_id === filters.category_id);
-  }
-  
-  if (filters?.search) {
-    const searchLower = filters.search.toLowerCase();
-    filtered = filtered.filter(p => 
-      p.name.toLowerCase().includes(searchLower) ||
-      p.description.toLowerCase().includes(searchLower)
-    );
-  }
-  
-  if (filters?.in_stock_only) {
-    filtered = filtered.filter(p => p.stock_status !== 'out_of_stock');
-  }
-  
-  if (filters?.min_price !== undefined) {
-    filtered = filtered.filter(p => p.price >= filters.min_price!);
-  }
-  
-  if (filters?.max_price !== undefined) {
-    filtered = filtered.filter(p => p.price <= filters.max_price!);
-  }
-  
-  // Sorting
-  if (filters?.sort_by) {
-    switch (filters.sort_by) {
-      case 'name':
-        filtered.sort((a, b) => a.name.localeCompare(b.name));
-        break;
-      case 'price_asc':
-        filtered.sort((a, b) => a.price - b.price);
-        break;
-      case 'price_desc':
-        filtered.sort((a, b) => b.price - a.price);
-        break;
-      case 'newest':
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-    }
-  }
-  
-  const page = filters?.page || 1;
-  const perPage = filters?.per_page || 12;
-  const start = (page - 1) * perPage;
-  const paginated = filtered.slice(start, start + perPage);
-  
-  return {
-    success: true,
-    data: {
-      data: paginated,
-      total: filtered.length,
-      page,
-      per_page: perPage,
-      total_pages: Math.ceil(filtered.length / perPage),
-    },
-  };
+  const params = new URLSearchParams();
+  if (filters?.category_id) params.set('category_id', String(filters.category_id));
+  if (filters?.search) params.set('search', filters.search);
+  if (filters?.in_stock_only) params.set('in_stock_only', 'true');
+  if (filters?.min_price !== undefined) params.set('min_price', String(filters.min_price));
+  if (filters?.max_price !== undefined) params.set('max_price', String(filters.max_price));
+  if (filters?.sort_by) params.set('sort_by', filters.sort_by);
+  if (filters?.page) params.set('page', String(filters.page));
+  if (filters?.per_page) params.set('per_page', String(filters.per_page));
+
+  const res = await fetch(`${API_BASE_URL}/api/products?${params.toString()}`);
+  const data = await res.json();
+  return data;
 }
 
 /**
@@ -361,9 +315,13 @@ export async function getProducts(filters?: ProductFilters): Promise<ApiResponse
  * Odoo endpoint: GET /api/products?featured=true
  */
 export async function getFeaturedProducts(): Promise<ApiResponse<Product[]>> {
-  await delay(300);
-  const featured = mockProducts.filter(p => p.is_featured);
-  return { success: true, data: featured };
+  const res = await fetch(`${API_BASE_URL}/api/products?in_stock_only=true&sort_by=newest&per_page=8`);
+  const data = await res.json();
+  if (data?.data?.data) {
+    const featured = (data.data.data as Product[]).filter(p => p.is_featured);
+    return { success: true, data: featured };
+  }
+  return { success: false, error: 'Failed to fetch featured products' };
 }
 
 /**
@@ -372,12 +330,9 @@ export async function getFeaturedProducts(): Promise<ApiResponse<Product[]>> {
  * Odoo endpoint: GET /api/products/{slug}
  */
 export async function getProductBySlug(slug: string): Promise<ApiResponse<Product>> {
-  await delay(300);
-  const product = mockProducts.find(p => p.slug === slug);
-  if (product) {
-    return { success: true, data: product };
-  }
-  return { success: false, error: 'Product not found' };
+  const res = await fetch(`${API_BASE_URL}/api/products/slug/${slug}`);
+  const data = await res.json();
+  return data;
 }
 
 /**

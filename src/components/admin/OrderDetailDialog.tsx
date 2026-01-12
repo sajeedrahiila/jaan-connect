@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Package,
@@ -16,6 +16,7 @@ import {
   Printer,
   Download,
   ShoppingCart,
+  FileText,
 } from 'lucide-react';
 import {
   Dialog,
@@ -36,6 +37,8 @@ import {
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
+import { generateOrderReceiptPDF } from '@/lib/pdf';
+import { generateOrderBarcode } from '@/lib/barcode';
 
 interface OrderItem {
   id: number;
@@ -92,11 +95,63 @@ const statusTimeline = [
   { key: 'delivered', label: 'Delivered', icon: CheckCircle },
 ];
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 export function OrderDetailDialog({ open, onOpenChange, order, onStatusUpdate }: OrderDetailDialogProps) {
   const [newStatus, setNewStatus] = useState(order?.status || 'pending');
   const [trackingNumber, setTrackingNumber] = useState(order?.trackingNumber || '');
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isCreatingInvoice, setIsCreatingInvoice] = useState(false);
+  const [barcodeImage, setBarcodeImage] = useState<string>('');
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (order?.id) {
+      generateOrderBarcode(order.id, {
+        width: 2,
+        height: 60,
+        displayValue: true,
+        fontSize: 12,
+      }).then(setBarcodeImage);
+    }
+  }, [order?.id]);
+
+  const handleCreateInvoice = async () => {
+    if (!order) return;
+
+    setIsCreatingInvoice(true);
+    try {
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/invoices/from-order/${order.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ due_days: 30 }),
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        toast({
+          title: 'Invoice Created',
+          description: `Invoice ${result.data.invoice_number} has been created successfully`,
+        });
+      } else {
+        throw new Error('Failed to create invoice');
+      }
+    } catch (error) {
+      console.error('Create invoice error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to create invoice',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsCreatingInvoice(false);
+    }
+  };
 
   if (!order) return null;
 
@@ -138,10 +193,15 @@ export function OrderDetailDialog({ open, onOpenChange, order, onStatusUpdate }:
                 })}
               </p>
             </div>
-            <Badge className={statusConfig[order.status].color}>
-              <StatusIcon className="h-3 w-3 mr-1" />
-              {statusConfig[order.status].label}
-            </Badge>
+            <div className="flex flex-col items-end gap-2">
+              {barcodeImage && (
+                <img src={barcodeImage} alt="Order Barcode" className="h-14" />
+              )}
+              <Badge className={statusConfig[order.status].color}>
+                <StatusIcon className="h-3 w-3 mr-1" />
+                {statusConfig[order.status].label}
+              </Badge>
+            </div>
           </div>
         </DialogHeader>
 
@@ -280,6 +340,23 @@ export function OrderDetailDialog({ open, onOpenChange, order, onStatusUpdate }:
 
           <Separator />
 
+          {/* Create Invoice Button */}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCreateInvoice}
+            disabled={isCreatingInvoice}
+          >
+            {isCreatingInvoice ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <FileText className="h-4 w-4 mr-2" />
+            )}
+            Create Invoice
+          </Button>
+
+          <Separator />
+
           {/* Update Status */}
           <div className="space-y-4">
             <h4 className="font-medium">Update Order Status</h4>
@@ -315,11 +392,30 @@ export function OrderDetailDialog({ open, onOpenChange, order, onStatusUpdate }:
           {/* Actions */}
           <div className="flex flex-col sm:flex-row justify-between gap-3">
             <div className="flex gap-2">
-              <Button variant="outline" size="sm">
+              <Button variant="outline" size="sm" onClick={() => window.print()}>
                 <Printer className="h-4 w-4 mr-2" />
-                Print Invoice
+                Print Receipt
               </Button>
-              <Button variant="outline" size="sm">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => order && (await generateOrderReceiptPDF({
+                  order_number: order.id,
+                  customer: order.customer,
+                  email: order.email,
+                  phone: order.phone,
+                  shippingAddress: order.shippingAddress,
+                  items: order.items,
+                  subtotal: order.subtotal,
+                  tax: order.tax,
+                  shipping: order.shipping,
+                  total: order.total,
+                  paymentMethod: order.paymentMethod,
+                  status: order.status,
+                  date: order.date,
+                  notes: order.notes,
+                }))}
+              >
                 <Download className="h-4 w-4 mr-2" />
                 Download PDF
               </Button>

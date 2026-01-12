@@ -8,13 +8,14 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "@/contexts/CartContext";
-import { SupabaseAuthProvider } from "@/hooks/useAuth";
+import { SupabaseAuthProvider } from "@/hooks/useAuth-local";
 import Index from "./pages/Index";
 import Products from "./pages/Products";
 import Cart from "./pages/Cart";
 import Auth from "./pages/Auth";
 import Checkout from "./pages/Checkout";
 import ProductDetail from "./pages/ProductDetail";
+import Account from "./pages/Account";
 import NotFound from "./pages/NotFound";
 
 // Admin Pages
@@ -29,6 +30,9 @@ import ActivityPage from "./pages/admin/ActivityPage";
 import CategoriesPage from "./pages/admin/CategoriesPage";
 import CustomersPage from "./pages/admin/CustomersPage";
 import InventoryPage from "./pages/admin/InventoryPage";
+import InvoicesPage from "./pages/admin/InvoicesPage";
+import PurchaseOrdersPage from "./pages/admin/PurchaseOrdersPage";
+import SuppliersPageEnhanced from "./pages/admin/SuppliersPageEnhanced";
 
 const queryClient = new QueryClient();
 
@@ -47,6 +51,7 @@ const App = () => (
               <Route path="/products/:slug" element={<ProductDetail />} />
               <Route path="/cart" element={<Cart />} />
               <Route path="/checkout" element={<Checkout />} />
+              <Route path="/account" element={<Account />} />
               <Route path="/auth" element={<Auth />} />
               <Route path="/login" element={<Auth />} />
               <Route path="/register" element={<Auth />} />
@@ -56,10 +61,13 @@ const App = () => (
                 <Route index element={<Dashboard />} />
                 <Route path="users" element={<UsersPage />} />
                 <Route path="products" element={<ProductsPage />} />
+                <Route path="suppliers" element={<SuppliersPageEnhanced />} />
                 <Route path="inventory" element={<InventoryPage />} />
                 <Route path="categories" element={<CategoriesPage />} />
                 <Route path="orders" element={<OrdersPage />} />
                 <Route path="customers" element={<CustomersPage />} />
+                <Route path="invoices" element={<InvoicesPage />} />
+                <Route path="purchase-orders" element={<PurchaseOrdersPage />} />
                 <Route path="analytics" element={<AnalyticsPage />} />
                 <Route path="activity" element={<ActivityPage />} />
                 <Route path="settings" element={<SettingsPage />} />

@@ -16,6 +16,8 @@ import {
   AlertTriangle,
   BarChart3,
   RefreshCw,
+  FileText,
+  CreditCard,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -36,7 +38,8 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { supabase } from '@/integrations/supabase/client';
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 interface Stats {
   totalUsers: number;
@@ -45,49 +48,48 @@ interface Stats {
   totalOrders: number;
   revenue: number;
   pendingOrders: number;
+  totalInvoices?: number;
+  invoiceRevenue?: number;
+  receivables?: number;
+  paidAmount?: number;
+  overdueInvoices?: number;
 }
 
-// Mock data for charts
-const revenueData = [
-  { name: 'Mon', revenue: 4500, orders: 12 },
-  { name: 'Tue', revenue: 5200, orders: 18 },
-  { name: 'Wed', revenue: 4800, orders: 15 },
-  { name: 'Thu', revenue: 6100, orders: 22 },
-  { name: 'Fri', revenue: 5800, orders: 19 },
-  { name: 'Sat', revenue: 7200, orders: 28 },
-  { name: 'Sun', revenue: 6500, orders: 24 },
-];
+interface RevenuePoint {
+  label: string;
+  revenue: number;
+  orders: number;
+}
 
-const categoryData = [
-  { name: 'Grains', value: 35, color: 'hsl(var(--primary))' },
-  { name: 'Oils', value: 25, color: 'hsl(var(--accent))' },
-  { name: 'Beverages', value: 20, color: '#10b981' },
-  { name: 'Sweeteners', value: 15, color: '#f59e0b' },
-  { name: 'Others', value: 5, color: '#6366f1' },
-];
+interface CategoryBreakdown {
+  name: string;
+  sales: number;
+  orders: number;
+}
 
-const recentActivity = [
-  { id: 1, type: 'order', message: 'New order #ORD-156 placed', time: '2 min ago', icon: ShoppingCart },
-  { id: 2, type: 'user', message: 'New user registered: john@example.com', time: '15 min ago', icon: Users },
-  { id: 3, type: 'stock', message: 'Low stock alert: Green Tea Premium', time: '1 hour ago', icon: AlertTriangle },
-  { id: 4, type: 'order', message: 'Order #ORD-152 delivered', time: '2 hours ago', icon: CheckCircle },
-  { id: 5, type: 'product', message: 'Product updated: Organic Honey', time: '3 hours ago', icon: Package },
-];
+interface TopProduct {
+  name: string;
+  sales: number;
+  revenue: number;
+}
 
-const topProducts = [
-  { name: 'Premium Basmati Rice', sales: 124, revenue: 11155, progress: 100 },
-  { name: 'Organic Whole Wheat Flour', sales: 98, revenue: 4410, progress: 79 },
-  { name: 'Cold Pressed Coconut Oil', sales: 87, revenue: 2132, progress: 70 },
-  { name: 'Organic Honey', sales: 76, revenue: 1443, progress: 61 },
-  { name: 'Green Tea Premium', sales: 65, revenue: 2080, progress: 52 },
-];
+interface RecentOrder {
+  id: number;
+  order_number: string;
+  customer_name: string;
+  total: number;
+  status: string;
+  created_at: string;
+}
 
-const recentOrders = [
-  { id: 'ORD-156', customer: 'Sarah Wilson', total: 245.99, status: 'pending' },
-  { id: 'ORD-155', customer: 'Mike Johnson', total: 189.50, status: 'processing' },
-  { id: 'ORD-154', customer: 'Emily Brown', total: 520.00, status: 'shipped' },
-  { id: 'ORD-153', customer: 'Tom Davis', total: 89.99, status: 'delivered' },
-];
+interface ActivityItem {
+  id: number;
+  action: string;
+  entity_type: string;
+  entity_id: number;
+  details: any;
+  created_at: string;
+}
 
 const statCards = [
   {
@@ -100,19 +102,20 @@ const statCards = [
     prefix: '$',
   },
   {
-    title: 'Total Users',
-    key: 'totalUsers' as const,
-    icon: Users,
-    color: 'bg-blue-500',
-    trend: '+12%',
+    title: 'Accounts Receivable',
+    key: 'receivables' as const,
+    icon: CreditCard,
+    color: 'bg-orange-500',
+    trend: '',
     trendUp: true,
+    prefix: '$',
   },
   {
-    title: 'Total Orders',
-    key: 'totalOrders' as const,
-    icon: ShoppingCart,
-    color: 'bg-violet-500',
-    trend: '+8.5%',
+    title: 'Total Invoices',
+    key: 'totalInvoices' as const,
+    icon: FileText,
+    color: 'bg-purple-500',
+    trend: '',
     trendUp: true,
   },
   {
@@ -129,46 +132,77 @@ export default function Dashboard() {
   const [stats, setStats] = useState<Stats>({
     totalUsers: 0,
     newUsersToday: 0,
-    totalProducts: 156,
-    totalOrders: 89,
-    revenue: 45230,
-    pendingOrders: 12,
+    totalProducts: 0,
+    totalOrders: 0,
+    revenue: 0,
+    pendingOrders: 0,
   });
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [revenueTrend, setRevenueTrend] = useState<RevenuePoint[]>([]);
+  const [categories, setCategories] = useState<CategoryBreakdown[]>([]);
+  const [topProducts, setTopProducts] = useState<TopProduct[]>([]);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
 
   const fetchStats = async () => {
     try {
       setRefreshing(true);
+      const token = localStorage.getItem('session_token');
       
-      const { count: usersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+      const res = await fetch(`${API_URL}/api/admin/stats`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
 
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-
-      const { count: newUsersCount } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true })
-        .gte('created_at', today.toISOString());
-
-      setStats((prev) => ({
-        ...prev,
-        totalUsers: usersCount || 0,
-        newUsersToday: newUsersCount || 0,
-      }));
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          setStats({
+            ...result.data,
+            newUsersToday: 0, // Can add this to backend later
+          });
+        }
+      }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error('Failed to fetch stats:', error);
     } finally {
-      setLoading(false);
       setRefreshing(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchStats();
+    fetchDashboardData();
   }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/dashboard-data`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          setRevenueTrend(result.data.revenueTrend || []);
+          setCategories(result.data.categoryBreakdown || []);
+          setTopProducts(result.data.topProducts || []);
+          setRecentOrders(result.data.recentOrders || []);
+          setRecentActivity(result.data.recentActivity || []);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch dashboard data:', error);
+    }
+  };
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -178,6 +212,30 @@ export default function Dashboard() {
       case 'delivered': return 'bg-emerald-100 text-emerald-800';
       default: return 'bg-secondary text-secondary-foreground';
     }
+  };
+
+  const categoryColors = ['#0ea5e9', '#10b981', '#8b5cf6', '#f59e0b', '#ef4444', '#6366f1'];
+  const maxProductRevenue = Math.max(...topProducts.map((p) => Number(p.revenue) || 0), 0) || 1;
+
+  const getActivityIcon = (action: string) => {
+    switch (action) {
+      case 'update':
+        return RefreshCw;
+      case 'create':
+      case 'insert':
+        return CheckCircle;
+      case 'delete':
+        return AlertTriangle;
+      default:
+        return Activity;
+    }
+  };
+
+  const formatActivityMessage = (activity: ActivityItem) => {
+    if (activity.entity_type) {
+      return `${activity.action} ${activity.entity_type} #${activity.entity_id || ''}`.trim();
+    }
+    return activity.action || 'Activity';
   };
 
   return (
@@ -223,7 +281,7 @@ export default function Dashboard() {
                         <span className="inline-block h-8 w-20 bg-secondary animate-pulse rounded" />
                       ) : (
                         <>
-                          {card.prefix || ''}{stats[card.key].toLocaleString()}
+                          {card.prefix || ''}{(stats[card.key] || 0).toLocaleString()}
                         </>
                       )}
                     </p>
@@ -233,21 +291,103 @@ export default function Dashboard() {
                   </div>
                 </div>
                 <div className="flex items-center mt-3 text-sm">
-                  {card.trendUp ? (
-                    <ArrowUpRight className="h-4 w-4 text-emerald-500 mr-1" />
-                  ) : (
-                    <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
+                  {card.trend && (
+                    <>
+                      {card.trendUp ? (
+                        <ArrowUpRight className="h-4 w-4 text-emerald-500 mr-1" />
+                      ) : (
+                        <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
+                      )}
+                      <span className={card.trendUp ? 'text-emerald-500' : 'text-red-500'}>
+                        {card.trend}
+                      </span>
+                      <span className="text-muted-foreground ml-1">vs last month</span>
+                    </>
                   )}
-                  <span className={card.trendUp ? 'text-emerald-500' : 'text-red-500'}>
-                    {card.trend}
-                  </span>
-                  <span className="text-muted-foreground ml-1">vs last month</span>
                 </div>
               </CardContent>
               <div className={`absolute bottom-0 left-0 right-0 h-1 ${card.color}`} />
             </Card>
           </motion.div>
         ))}
+      </div>
+
+      {/* Invoice Metrics */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Invoice Revenue
+                </p>
+                <p className="text-2xl font-bold">
+                  {loading ? (
+                    <span className="inline-block h-8 w-20 bg-secondary animate-pulse rounded" />
+                  ) : (
+                    `$${(stats.invoiceRevenue || 0).toLocaleString()}`
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Total billed amount
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-blue-500">
+                <FileText className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Paid Amount
+                </p>
+                <p className="text-2xl font-bold">
+                  {loading ? (
+                    <span className="inline-block h-8 w-20 bg-secondary animate-pulse rounded" />
+                  ) : (
+                    `$${(stats.paidAmount || 0).toLocaleString()}`
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Successfully collected
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-green-500">
+                <CheckCircle className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardContent className="pt-6">
+            <div className="flex items-center justify-between">
+              <div className="space-y-1">
+                <p className="text-sm font-medium text-muted-foreground">
+                  Overdue Invoices
+                </p>
+                <p className="text-2xl font-bold">
+                  {loading ? (
+                    <span className="inline-block h-8 w-20 bg-secondary animate-pulse rounded" />
+                  ) : (
+                    (stats.overdueInvoices || 0).toLocaleString()
+                  )}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Requires attention
+                </p>
+              </div>
+              <div className="p-3 rounded-xl bg-red-500">
+                <AlertTriangle className="h-5 w-5 text-white" />
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       {/* Charts Row */}
@@ -267,7 +407,7 @@ export default function Dashboard() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={revenueData}>
+                <AreaChart data={revenueTrend}>
                   <defs>
                     <linearGradient id="colorRevenue" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -310,16 +450,16 @@ export default function Dashboard() {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={categoryData}
+                    data={categories.map((cat, idx) => ({ ...cat, color: categoryColors[idx % categoryColors.length] }))}
                     cx="50%"
                     cy="50%"
                     innerRadius={50}
                     outerRadius={80}
                     paddingAngle={4}
-                    dataKey="value"
+                    dataKey="sales"
                   >
-                    {categoryData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {categories.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={categoryColors[index % categoryColors.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -328,17 +468,17 @@ export default function Dashboard() {
                       border: '1px solid hsl(var(--border))',
                       borderRadius: '8px',
                     }}
-                    formatter={(value: number) => [`${value}%`, 'Share']}
+                    formatter={(value: number) => [`$${Number(value).toFixed(2)}`, 'Sales']}
                   />
                 </PieChart>
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-2 mt-4">
-              {categoryData.map((cat) => (
+              {categories.map((cat, idx) => (
                 <div key={cat.name} className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: cat.color }} />
+                  <div className="h-2 w-2 rounded-full" style={{ backgroundColor: categoryColors[idx % categoryColors.length] }} />
                   <span className="text-xs text-muted-foreground">{cat.name}</span>
-                  <span className="text-xs font-medium ml-auto">{cat.value}%</span>
+                  <span className="text-xs font-medium ml-auto">${Number(cat.sales).toFixed(0)}</span>
                 </div>
               ))}
             </div>
@@ -384,7 +524,7 @@ export default function Dashboard() {
                       <span className="text-xs text-muted-foreground block">{product.sales} sales</span>
                     </div>
                   </div>
-                  <Progress value={product.progress} className="h-1.5" />
+                  <Progress value={Math.min(100, (Number(product.revenue) / maxProductRevenue) * 100)} className="h-1.5" />
                 </motion.div>
               ))}
             </div>
@@ -418,16 +558,16 @@ export default function Dashboard() {
                   <div className="flex items-center gap-3">
                     <Avatar className="h-9 w-9">
                       <AvatarFallback className="text-xs bg-primary/10 text-primary">
-                        {order.customer.split(' ').map(n => n[0]).join('')}
+                        {(order.customer_name || '').split(' ').map(n => n[0]).join('') || 'C'}
                       </AvatarFallback>
                     </Avatar>
                     <div>
-                      <p className="text-sm font-medium">{order.id}</p>
-                      <p className="text-xs text-muted-foreground">{order.customer}</p>
+                      <p className="text-sm font-medium">{order.order_number || `#${order.id}`}</p>
+                      <p className="text-xs text-muted-foreground">{order.customer_name || 'Unknown customer'}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-3">
-                    <span className="text-sm font-medium">${order.total.toFixed(2)}</span>
+                    <span className="text-sm font-medium">${Number(order.total).toFixed(2)}</span>
                     <Badge className={`${getStatusColor(order.status)} capitalize text-xs`}>
                       {order.status}
                     </Badge>
@@ -469,11 +609,14 @@ export default function Dashboard() {
                   className="relative flex items-start gap-4 pl-10"
                 >
                   <div className="absolute left-0 p-2 rounded-full bg-card border border-border">
-                    <activity.icon className="h-4 w-4 text-muted-foreground" />
+                    {(() => {
+                      const Icon = getActivityIcon(activity.action);
+                      return <Icon className="h-4 w-4 text-muted-foreground" />;
+                    })()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm">{activity.message}</p>
-                    <p className="text-xs text-muted-foreground">{activity.time}</p>
+                    <p className="text-sm">{formatActivityMessage(activity)}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(activity.created_at).toLocaleString()}</p>
                   </div>
                 </motion.div>
               ))}

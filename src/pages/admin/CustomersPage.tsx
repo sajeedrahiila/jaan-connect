@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -55,157 +55,73 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Separator } from '@/components/ui/separator';
 
-// Mock customer data
-const mockCustomers = [
-  {
-    id: 1,
-    name: 'John Smith',
-    email: 'john.smith@example.com',
-    phone: '+1 (555) 123-4567',
-    avatar: '',
-    status: 'active',
-    totalOrders: 24,
-    totalSpent: 3450.00,
-    lastOrder: '2026-01-08',
-    joinDate: '2024-03-15',
-    addresses: [
-      { type: 'Home', address: '123 Main St, New York, NY 10001' },
-      { type: 'Office', address: '456 Business Ave, Suite 100, New York, NY 10002' },
-    ],
-    orders: [
-      { id: 'ORD-001', date: '2026-01-08', total: 125.00, status: 'delivered', items: 4 },
-      { id: 'ORD-002', date: '2026-01-05', total: 89.99, status: 'delivered', items: 2 },
-      { id: 'ORD-003', date: '2025-12-28', total: 245.50, status: 'delivered', items: 6 },
-      { id: 'ORD-004', date: '2025-12-15', total: 67.00, status: 'delivered', items: 3 },
-    ],
-    tier: 'Gold',
-    notes: 'VIP customer, prefers express shipping.',
-  },
-  {
-    id: 2,
-    name: 'Sarah Johnson',
-    email: 'sarah.j@example.com',
-    phone: '+1 (555) 234-5678',
-    avatar: '',
-    status: 'active',
-    totalOrders: 18,
-    totalSpent: 2890.50,
-    lastOrder: '2026-01-10',
-    joinDate: '2024-06-20',
-    addresses: [
-      { type: 'Home', address: '789 Oak Lane, Los Angeles, CA 90001' },
-    ],
-    orders: [
-      { id: 'ORD-010', date: '2026-01-10', total: 156.00, status: 'processing', items: 5 },
-      { id: 'ORD-011', date: '2026-01-02', total: 234.50, status: 'delivered', items: 8 },
-    ],
-    tier: 'Silver',
-    notes: '',
-  },
-  {
-    id: 3,
-    name: 'Michael Brown',
-    email: 'm.brown@example.com',
-    phone: '+1 (555) 345-6789',
-    avatar: '',
-    status: 'active',
-    totalOrders: 42,
-    totalSpent: 6780.25,
-    lastOrder: '2026-01-09',
-    joinDate: '2023-11-10',
-    addresses: [
-      { type: 'Home', address: '321 Pine Street, Chicago, IL 60601' },
-    ],
-    orders: [
-      { id: 'ORD-020', date: '2026-01-09', total: 312.00, status: 'shipped', items: 10 },
-    ],
-    tier: 'Platinum',
-    notes: 'Wholesale buyer, eligible for bulk discounts.',
-  },
-  {
-    id: 4,
-    name: 'Emily Davis',
-    email: 'emily.davis@example.com',
-    phone: '+1 (555) 456-7890',
-    avatar: '',
-    status: 'inactive',
-    totalOrders: 5,
-    totalSpent: 450.00,
-    lastOrder: '2025-08-15',
-    joinDate: '2025-02-28',
-    addresses: [
-      { type: 'Home', address: '654 Elm Road, Houston, TX 77001' },
-    ],
-    orders: [
-      { id: 'ORD-030', date: '2025-08-15', total: 78.00, status: 'delivered', items: 2 },
-    ],
-    tier: 'Bronze',
-    notes: '',
-  },
-  {
-    id: 5,
-    name: 'Robert Wilson',
-    email: 'r.wilson@example.com',
-    phone: '+1 (555) 567-8901',
-    avatar: '',
-    status: 'blocked',
-    totalOrders: 3,
-    totalSpent: 125.00,
-    lastOrder: '2025-06-20',
-    joinDate: '2025-05-10',
-    addresses: [],
-    orders: [
-      { id: 'ORD-040', date: '2025-06-20', total: 45.00, status: 'cancelled', items: 1 },
-    ],
-    tier: 'Bronze',
-    notes: 'Account suspended due to payment issues.',
-  },
-  {
-    id: 6,
-    name: 'Amanda Martinez',
-    email: 'a.martinez@example.com',
-    phone: '+1 (555) 678-9012',
-    avatar: '',
-    status: 'active',
-    totalOrders: 31,
-    totalSpent: 4200.75,
-    lastOrder: '2026-01-11',
-    joinDate: '2024-01-05',
-    addresses: [
-      { type: 'Home', address: '987 Cedar Blvd, Miami, FL 33101' },
-      { type: 'Work', address: '111 Commerce St, Miami, FL 33102' },
-    ],
-    orders: [
-      { id: 'ORD-050', date: '2026-01-11', total: 189.00, status: 'pending', items: 6 },
-      { id: 'ORD-051', date: '2026-01-07', total: 95.50, status: 'delivered', items: 3 },
-    ],
-    tier: 'Gold',
-    notes: 'Prefers organic products only.',
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-type Customer = typeof mockCustomers[0];
+interface Customer {
+  id: string;
+  email: string;
+  full_name: string;
+  phone?: string;
+  avatar_url?: string;
+  status: 'active' | 'inactive' | 'blocked';
+  total_orders: number;
+  total_spent: number;
+  last_order_date?: string;
+  created_at: string;
+  tier: 'Bronze' | 'Silver' | 'Gold' | 'Platinum';
+}
 
 export default function CustomersPage() {
+  const [customers, setCustomers] = useState<Customer[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [tierFilter, setTierFilter] = useState<string>('all');
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  const filteredCustomers = mockCustomers.filter((customer) => {
-    const matchesSearch =
-      customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      customer.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || customer.status === statusFilter;
+  useEffect(() => {
+    fetchCustomers();
+  }, [statusFilter, searchQuery]);
+
+  const fetchCustomers = async () => {
+    try {
+      const token = localStorage.getItem('session_token');
+      const params = new URLSearchParams({
+        status: statusFilter,
+        ...(searchQuery ? { search: searchQuery } : {}),
+      });
+
+      const res = await fetch(`${API_URL}/api/admin/customers?${params}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          setCustomers(result.data.data);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredCustomers = customers.filter((customer) => {
     const matchesTier = tierFilter === 'all' || customer.tier === tierFilter;
-    return matchesSearch && matchesStatus && matchesTier;
+    return matchesTier;
   });
 
-  const totalCustomers = mockCustomers.length;
-  const activeCustomers = mockCustomers.filter((c) => c.status === 'active').length;
-  const totalRevenue = mockCustomers.reduce((sum, c) => sum + c.totalSpent, 0);
-  const avgOrderValue = totalRevenue / mockCustomers.reduce((sum, c) => sum + c.totalOrders, 0);
+  const totalCustomers = customers.length;
+  const activeCustomers = customers.filter((c) => c.status === 'active').length;
+  const totalRevenue = customers.reduce((sum, c) => sum + Number(c.total_spent || 0), 0);
+  const totalOrders = customers.reduce((sum, c) => sum + (c.total_orders || 0), 0);
+  const avgOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -250,9 +166,30 @@ export default function CustomersPage() {
     }
   };
 
-  const handleViewCustomer = (customer: Customer) => {
-    setSelectedCustomer(customer);
+  const handleViewCustomer = async (customer: Customer) => {
     setDetailDialogOpen(true);
+    // Fetch full customer details including orders
+    try {
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/customers/${customer.id}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success) {
+          setSelectedCustomer({ ...customer, ...(result.data as any) });
+        }
+      } else {
+        setSelectedCustomer(customer);
+      }
+    } catch (error) {
+      console.error('Failed to fetch customer details:', error);
+      setSelectedCustomer(customer);
+    }
   };
 
   const clearFilters = () => {
@@ -403,13 +340,13 @@ export default function CustomersPage() {
                     <TableCell>
                       <div className="flex items-center gap-3">
                         <Avatar className="h-10 w-10">
-                          <AvatarImage src={customer.avatar} />
+                          <AvatarImage src={customer.avatar_url} />
                           <AvatarFallback className="bg-primary/10 text-primary font-medium">
-                            {customer.name.split(' ').map((n) => n[0]).join('')}
+                            {(customer.full_name || customer.email).split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{customer.name}</p>
+                          <p className="font-medium">{customer.full_name || 'N/A'}</p>
                           <p className="text-sm text-muted-foreground">{customer.email}</p>
                         </div>
                       </div>
@@ -419,14 +356,14 @@ export default function CustomersPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <ShoppingBag className="h-4 w-4 text-muted-foreground" />
-                        <span>{customer.totalOrders}</span>
+                        <span>{customer.total_orders}</span>
                       </div>
                     </TableCell>
                     <TableCell className="font-medium">
-                      ${customer.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                      ${Number(customer.total_spent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {new Date(customer.lastOrder).toLocaleDateString()}
+                      {customer.last_order_date ? new Date(customer.last_order_date).toLocaleDateString() : 'No orders yet'}
                     </TableCell>
                     <TableCell>
                       <DropdownMenu>
@@ -483,24 +420,24 @@ export default function CustomersPage() {
                 {/* Customer Header */}
                 <div className="flex items-start gap-4">
                   <Avatar className="h-16 w-16">
-                    <AvatarImage src={selectedCustomer.avatar} />
+                    <AvatarImage src={selectedCustomer.avatar_url} />
                     <AvatarFallback className="bg-primary/10 text-primary text-xl font-medium">
-                      {selectedCustomer.name.split(' ').map((n) => n[0]).join('')}
+                      {(selectedCustomer.full_name || selectedCustomer.email).split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1">
                     <div className="flex items-center gap-3">
-                      <h3 className="text-xl font-semibold">{selectedCustomer.name}</h3>
+                      <h3 className="text-xl font-semibold">{selectedCustomer.full_name || 'N/A'}</h3>
                       {getStatusBadge(selectedCustomer.status)}
                       {getTierBadge(selectedCustomer.tier)}
                     </div>
                     <p className="text-muted-foreground">{selectedCustomer.email}</p>
-                    <p className="text-sm text-muted-foreground">{selectedCustomer.phone}</p>
+                    <p className="text-sm text-muted-foreground">{selectedCustomer.phone || 'No phone'}</p>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-muted-foreground">Customer since</p>
                     <p className="font-medium">
-                      {new Date(selectedCustomer.joinDate).toLocaleDateString('en-US', {
+                      {new Date(selectedCustomer.created_at).toLocaleDateString('en-US', {
                         month: 'long',
                         year: 'numeric',
                       })}
@@ -514,14 +451,14 @@ export default function CustomersPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <Card>
                     <CardContent className="pt-4 text-center">
-                      <p className="text-2xl font-bold">{selectedCustomer.totalOrders}</p>
+                      <p className="text-2xl font-bold">{selectedCustomer.total_orders || 0}</p>
                       <p className="text-sm text-muted-foreground">Total Orders</p>
                     </CardContent>
                   </Card>
                   <Card>
                     <CardContent className="pt-4 text-center">
                       <p className="text-2xl font-bold">
-                        ${selectedCustomer.totalSpent.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                        ${Number(selectedCustomer.total_spent || 0).toLocaleString('en-US', { minimumFractionDigits: 2 })}
                       </p>
                       <p className="text-sm text-muted-foreground">Total Spent</p>
                     </CardContent>
@@ -529,7 +466,7 @@ export default function CustomersPage() {
                   <Card>
                     <CardContent className="pt-4 text-center">
                       <p className="text-2xl font-bold">
-                        ${(selectedCustomer.totalSpent / selectedCustomer.totalOrders).toFixed(2)}
+                        ${selectedCustomer.total_orders > 0 ? (Number(selectedCustomer.total_spent) / selectedCustomer.total_orders).toFixed(2) : '0.00'}
                       </p>
                       <p className="text-sm text-muted-foreground">Avg. Order Value</p>
                     </CardContent>
@@ -546,8 +483,8 @@ export default function CustomersPage() {
 
                   <TabsContent value="orders" className="mt-4">
                     <div className="space-y-3">
-                      {selectedCustomer.orders.length > 0 ? (
-                        selectedCustomer.orders.map((order) => (
+                      {(selectedCustomer as any).orders?.length > 0 ? (
+                        (selectedCustomer as any).orders.map((order: any) => (
                           <div
                             key={order.id}
                             className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"

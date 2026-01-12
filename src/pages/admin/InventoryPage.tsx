@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -53,139 +53,24 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 
-// Mock inventory data with sales velocity
-const mockInventory = [
-  {
-    id: 1,
-    name: 'Organic Whole Wheat Flour',
-    sku: 'FLR-001',
-    currentStock: 45,
-    minStock: 50,
-    maxStock: 300,
-    reorderPoint: 75,
-    reorderQty: 100,
-    avgDailySales: 8.5,
-    lastRestocked: '2026-01-05',
-    supplier: 'Organic Mills Co.',
-    unitCost: 35.00,
-    category: 'Grains',
-    location: 'Warehouse A - Shelf 1',
-  },
-  {
-    id: 2,
-    name: 'Premium Basmati Rice (25kg)',
-    sku: 'RIC-002',
-    currentStock: 180,
-    minStock: 50,
-    maxStock: 400,
-    reorderPoint: 100,
-    reorderQty: 150,
-    avgDailySales: 5.2,
-    lastRestocked: '2026-01-08',
-    supplier: 'Golden Harvest Ltd.',
-    unitCost: 65.00,
-    category: 'Grains',
-    location: 'Warehouse A - Shelf 2',
-  },
-  {
-    id: 3,
-    name: 'Cold Pressed Coconut Oil',
-    sku: 'OIL-003',
-    currentStock: 0,
-    minStock: 30,
-    maxStock: 200,
-    reorderPoint: 50,
-    reorderQty: 80,
-    avgDailySales: 3.8,
-    lastRestocked: '2025-12-20',
-    supplier: 'Tropical Oils Inc.',
-    unitCost: 18.00,
-    category: 'Cooking Oils',
-    location: 'Warehouse B - Shelf 1',
-  },
-  {
-    id: 4,
-    name: 'Organic Honey (500g)',
-    sku: 'HON-004',
-    currentStock: 75,
-    minStock: 25,
-    maxStock: 150,
-    reorderPoint: 40,
-    reorderQty: 50,
-    avgDailySales: 2.1,
-    lastRestocked: '2026-01-03',
-    supplier: 'Nature\'s Best Apiaries',
-    unitCost: 12.00,
-    category: 'Sweeteners',
-    location: 'Warehouse B - Shelf 3',
-  },
-  {
-    id: 5,
-    name: 'Green Tea Premium Pack',
-    sku: 'TEA-005',
-    currentStock: 15,
-    minStock: 20,
-    maxStock: 100,
-    reorderPoint: 30,
-    reorderQty: 40,
-    avgDailySales: 4.2,
-    lastRestocked: '2025-12-28',
-    supplier: 'Asian Tea Traders',
-    unitCost: 22.00,
-    category: 'Beverages',
-    location: 'Warehouse A - Shelf 5',
-  },
-  {
-    id: 6,
-    name: 'Extra Virgin Olive Oil',
-    sku: 'OIL-006',
-    currentStock: 92,
-    minStock: 40,
-    maxStock: 250,
-    reorderPoint: 60,
-    reorderQty: 100,
-    avgDailySales: 6.3,
-    lastRestocked: '2026-01-10',
-    supplier: 'Mediterranean Imports',
-    unitCost: 28.00,
-    category: 'Cooking Oils',
-    location: 'Warehouse B - Shelf 1',
-  },
-  {
-    id: 7,
-    name: 'Quinoa Organic (1kg)',
-    sku: 'GRN-007',
-    currentStock: 28,
-    minStock: 30,
-    maxStock: 120,
-    reorderPoint: 45,
-    reorderQty: 60,
-    avgDailySales: 2.8,
-    lastRestocked: '2026-01-02',
-    supplier: 'Andean Superfoods',
-    unitCost: 45.00,
-    category: 'Grains',
-    location: 'Warehouse A - Shelf 3',
-  },
-  {
-    id: 8,
-    name: 'Almond Butter (340g)',
-    sku: 'NUT-008',
-    currentStock: 156,
-    minStock: 35,
-    maxStock: 200,
-    reorderPoint: 50,
-    reorderQty: 75,
-    avgDailySales: 1.9,
-    lastRestocked: '2026-01-09',
-    supplier: 'Nutty Delights Co.',
-    unitCost: 15.00,
-    category: 'Spreads',
-    location: 'Warehouse C - Shelf 2',
-  },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-type InventoryItem = typeof mockInventory[0];
+interface InventoryItem {
+  id: number;
+  name: string;
+  sku: string;
+  currentStock: number;
+  minStock: number;
+  maxStock: number;
+  reorderPoint: number;
+  reorderQty: number;
+  avgDailySales: number;
+  lastRestocked: string;
+  supplier: string;
+  unitCost: number;
+  category: string;
+  location: string;
+}
 
 // Stock alert types
 interface StockAlert {
@@ -199,6 +84,7 @@ interface StockAlert {
 }
 
 export default function InventoryPage() {
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
@@ -206,6 +92,47 @@ export default function InventoryPage() {
   const [reorderDialogOpen, setReorderDialogOpen] = useState(false);
   const [alertsDialogOpen, setAlertsDialogOpen] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
+
+  const fetchInventory = async () => {
+    try {
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/inventory`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          const mapped = (result.data.products as any[]).map((p) => ({
+            id: p.id,
+            name: p.name,
+            sku: p.sku,
+            currentStock: p.currentStock || 0,
+            minStock: p.minStock || 10,
+            maxStock: Math.max(p.currentStock + 50, 100),
+            reorderPoint: p.minStock ? Math.ceil(p.minStock * 1.5) : 15,
+            reorderQty: 25,
+            avgDailySales: 2.0,
+            lastRestocked: new Date().toISOString(),
+            supplier: 'Default Supplier',
+            unitCost: p.unitCost || Number(p.price) || 0,
+            category: 'General',
+            location: 'Warehouse A',
+          }));
+          setInventory(mapped);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch inventory:', error);
+    }
+  };
 
   // Calculate stock status for each item
   const getStockStatus = (item: InventoryItem) => {
@@ -247,7 +174,7 @@ export default function InventoryPage() {
   const stockAlerts = useMemo<StockAlert[]>(() => {
     const alerts: StockAlert[] = [];
     
-    mockInventory.forEach((item) => {
+    inventory.forEach((item) => {
       const status = getStockStatus(item);
       const daysLeft = getDaysUntilStockout(item);
       
@@ -288,22 +215,22 @@ export default function InventoryPage() {
       const severityOrder = { critical: 0, warning: 1, info: 2 };
       return severityOrder[a.severity] - severityOrder[b.severity];
     });
-  }, []);
+  }, [inventory]);
 
   // Items needing reorder
   const reorderItems = useMemo(() => {
-    return mockInventory
+    return inventory
       .map((item) => ({ item, suggestion: getReorderSuggestion(item) }))
       .filter(({ suggestion }) => suggestion.shouldReorder)
       .sort((a, b) => {
         const urgencyOrder = { urgent: 0, soon: 1, planned: 2, none: 3 };
-        return urgencyOrder[a.suggestion.urgency as keyof typeof urgencyOrder] - 
+        return urgencyOrder[a.suggestion.urgency as keyof typeof urgencyOrder] -
                urgencyOrder[b.suggestion.urgency as keyof typeof urgencyOrder];
       });
-  }, []);
+  }, [inventory]);
 
   // Filter inventory
-  const filteredInventory = mockInventory.filter((item) => {
+  const filteredInventory = inventory.filter((item) => {
     const matchesSearch =
       item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       item.sku.toLowerCase().includes(searchQuery.toLowerCase());
@@ -319,10 +246,10 @@ export default function InventoryPage() {
   });
 
   // Stats
-  const totalItems = mockInventory.length;
-  const outOfStockCount = mockInventory.filter((i) => getStockStatus(i) === 'out_of_stock').length;
-  const lowStockCount = mockInventory.filter((i) => ['critical', 'low'].includes(getStockStatus(i))).length;
-  const totalValue = mockInventory.reduce((sum, i) => sum + i.currentStock * i.unitCost, 0);
+  const totalItems = inventory.length;
+  const outOfStockCount = inventory.filter((i) => getStockStatus(i) === 'out_of_stock').length;
+  const lowStockCount = inventory.filter((i) => ['critical', 'low'].includes(getStockStatus(i))).length;
+  const totalValue = inventory.reduce((sum, i) => sum + i.currentStock * i.unitCost, 0);
 
   const getStatusBadge = (item: InventoryItem) => {
     const status = getStockStatus(item);

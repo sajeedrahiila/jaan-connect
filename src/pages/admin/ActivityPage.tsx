@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Activity,
@@ -10,16 +10,10 @@ import {
   Settings,
   Shield,
   AlertTriangle,
-  CheckCircle,
   Clock,
   Download,
   Calendar,
   User,
-  Edit,
-  Trash2,
-  Eye,
-  LogIn,
-  LogOut,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -33,7 +27,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 interface ActivityLog {
   id: number;
@@ -41,126 +34,22 @@ interface ActivityLog {
   action: string;
   description: string;
   user: string;
-  userEmail: string;
+  userEmail?: string;
   timestamp: string;
   ip?: string;
   details?: string;
   severity: 'info' | 'warning' | 'success' | 'error';
 }
 
-const mockActivities: ActivityLog[] = [
-  {
-    id: 1,
-    type: 'order',
-    action: 'Order Created',
-    description: 'New order #ORD-156 placed by customer',
-    user: 'Sarah Wilson',
-    userEmail: 'sarah@example.com',
-    timestamp: '2024-01-10T14:32:00Z',
-    severity: 'success',
-    details: 'Order total: $245.99, Items: 5',
-  },
-  {
-    id: 2,
-    type: 'user',
-    action: 'User Registered',
-    description: 'New user account created',
-    user: 'John Smith',
-    userEmail: 'john@example.com',
-    timestamp: '2024-01-10T13:45:00Z',
-    severity: 'info',
-    ip: '192.168.1.100',
-  },
-  {
-    id: 3,
-    type: 'security',
-    action: 'Failed Login Attempt',
-    description: 'Multiple failed login attempts detected',
-    user: 'Unknown',
-    userEmail: 'admin@store.com',
-    timestamp: '2024-01-10T12:20:00Z',
-    severity: 'warning',
-    ip: '45.33.22.11',
-    details: '5 failed attempts in 10 minutes',
-  },
-  {
-    id: 4,
-    type: 'product',
-    action: 'Product Updated',
-    description: 'Product "Organic Honey" price updated',
-    user: 'Admin',
-    userEmail: 'admin@store.com',
-    timestamp: '2024-01-10T11:15:00Z',
-    severity: 'info',
-    details: 'Price changed from $16.99 to $18.99',
-  },
-  {
-    id: 5,
-    type: 'order',
-    action: 'Order Shipped',
-    description: 'Order #ORD-152 marked as shipped',
-    user: 'Admin',
-    userEmail: 'admin@store.com',
-    timestamp: '2024-01-10T10:30:00Z',
-    severity: 'success',
-    details: 'Tracking number: TRK-789456',
-  },
-  {
-    id: 6,
-    type: 'system',
-    action: 'Low Stock Alert',
-    description: 'Product "Green Tea Premium" is low on stock',
-    user: 'System',
-    userEmail: 'system',
-    timestamp: '2024-01-10T09:00:00Z',
-    severity: 'warning',
-    details: 'Current stock: 15 units, Threshold: 20 units',
-  },
-  {
-    id: 7,
-    type: 'admin',
-    action: 'Role Changed',
-    description: 'User role updated to moderator',
-    user: 'Super Admin',
-    userEmail: 'superadmin@store.com',
-    timestamp: '2024-01-10T08:45:00Z',
-    severity: 'info',
-    details: 'User: mike@example.com changed from user to moderator',
-  },
-  {
-    id: 8,
-    type: 'product',
-    action: 'Product Created',
-    description: 'New product "Organic Quinoa" added',
-    user: 'Admin',
-    userEmail: 'admin@store.com',
-    timestamp: '2024-01-09T16:20:00Z',
-    severity: 'success',
-    details: 'SKU: QUI-001, Price: $12.99',
-  },
-  {
-    id: 9,
-    type: 'order',
-    action: 'Order Cancelled',
-    description: 'Order #ORD-148 cancelled by customer',
-    user: 'Tom Wilson',
-    userEmail: 'tom@example.com',
-    timestamp: '2024-01-09T15:10:00Z',
-    severity: 'error',
-    details: 'Reason: Changed mind',
-  },
-  {
-    id: 10,
-    type: 'security',
-    action: 'Admin Login',
-    description: 'Admin user logged in successfully',
-    user: 'Admin',
-    userEmail: 'admin@store.com',
-    timestamp: '2024-01-09T14:00:00Z',
-    severity: 'info',
-    ip: '192.168.1.1',
-  },
-];
+interface ActivityApiResponse {
+  success: boolean;
+  data: {
+    activities: any[];
+    total: number;
+    page: number;
+    per_page: number;
+  };
+}
 
 const getTypeIcon = (type: string) => {
   switch (type) {
@@ -183,29 +72,16 @@ const getSeverityColor = (severity: string) => {
   }
 };
 
-const getSeverityIcon = (severity: string) => {
-  switch (severity) {
-    case 'success': return CheckCircle;
-    case 'warning': return AlertTriangle;
-    case 'error': return Trash2;
-    default: return Activity;
-  }
-};
-
 export default function ActivityPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [severityFilter, setSeverityFilter] = useState('all');
-
-  const filteredActivities = mockActivities.filter((activity) => {
-    const matchesSearch =
-      activity.action.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      activity.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      activity.user.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = typeFilter === 'all' || activity.type === typeFilter;
-    const matchesSeverity = severityFilter === 'all' || activity.severity === severityFilter;
-    return matchesSearch && matchesType && matchesSeverity;
-  });
+  const [activities, setActivities] = useState<ActivityLog[]>([]);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+  const [page, setPage] = useState(1);
+  const perPage = 50;
 
   const formatTimestamp = (timestamp: string) => {
     const date = new Date(timestamp);
@@ -219,11 +95,61 @@ export default function ActivityPage() {
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
+  useEffect(() => {
+    const fetchActivities = async () => {
+      try {
+        setLoading(true);
+        setError('');
+
+        const params = new URLSearchParams();
+        params.append('page', String(page));
+        params.append('per_page', String(perPage));
+        if (typeFilter !== 'all') params.append('type', typeFilter);
+        if (severityFilter !== 'all') params.append('severity', severityFilter);
+        if (searchQuery.trim()) params.append('search', searchQuery.trim());
+
+        const res = await fetch(`/api/admin/activity?${params.toString()}`, {
+          credentials: 'include',
+        });
+
+        if (!res.ok) {
+          throw new Error('Failed to fetch activity logs');
+        }
+
+        const json = (await res.json()) as ActivityApiResponse;
+        const apiActivities = json.data.activities || [];
+
+        const normalized: ActivityLog[] = apiActivities.map((activity: any) => ({
+          id: activity.id,
+          type: activity.type,
+          action: activity.action,
+          description: activity.description,
+          user: activity.user_name || activity.user_email || 'Unknown',
+          userEmail: activity.user_email,
+          timestamp: activity.created_at,
+          ip: activity.ip_address || undefined,
+          details: activity.details || undefined,
+          severity: activity.severity || 'info',
+        }));
+
+        setActivities(normalized);
+        setTotal(json.data.total || 0);
+      } catch (err) {
+        console.error(err);
+        setError(err instanceof Error ? err.message : 'Unknown error');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchActivities();
+  }, [typeFilter, severityFilter, searchQuery, page]);
+
   const activityStats = {
-    total: mockActivities.length,
-    today: mockActivities.filter((a) => new Date(a.timestamp).toDateString() === new Date().toDateString()).length,
-    warnings: mockActivities.filter((a) => a.severity === 'warning').length,
-    errors: mockActivities.filter((a) => a.severity === 'error').length,
+    total,
+    today: activities.filter((a) => new Date(a.timestamp).toDateString() === new Date().toDateString()).length,
+    warnings: activities.filter((a) => a.severity === 'warning').length,
+    errors: activities.filter((a) => a.severity === 'error').length,
   };
 
   return (
@@ -300,11 +226,14 @@ export default function ActivityPage() {
               <Input
                 placeholder="Search activities..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-9"
               />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={typeFilter} onValueChange={(val) => { setTypeFilter(val); setPage(1); }}>
               <SelectTrigger className="w-[150px]">
                 <Filter className="h-4 w-4 mr-2" />
                 <SelectValue placeholder="Type" />
@@ -319,7 +248,7 @@ export default function ActivityPage() {
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={severityFilter} onValueChange={setSeverityFilter}>
+            <Select value={severityFilter} onValueChange={(val) => { setSeverityFilter(val); setPage(1); }}>
               <SelectTrigger className="w-[150px]">
                 <SelectValue placeholder="Severity" />
               </SelectTrigger>
@@ -340,17 +269,22 @@ export default function ActivityPage() {
         <CardHeader>
           <CardTitle>Activity Timeline</CardTitle>
           <CardDescription>
-            Showing {filteredActivities.length} of {mockActivities.length} events
+            Showing {activities.length} of {total} events
           </CardDescription>
         </CardHeader>
         <CardContent>
+          {error && (
+            <div className="mb-4 text-sm text-red-600">{error}</div>
+          )}
+          {loading && (
+            <div className="py-6 text-sm text-muted-foreground">Loading activity logs...</div>
+          )}
           <div className="relative">
             <div className="absolute left-6 top-0 bottom-0 w-px bg-border" />
             <div className="space-y-6">
-              {filteredActivities.map((activity, index) => {
+              {activities.map((activity, index) => {
                 const TypeIcon = getTypeIcon(activity.type);
-                const SeverityIcon = getSeverityIcon(activity.severity);
-                
+
                 return (
                   <motion.div
                     key={activity.id}
@@ -402,7 +336,7 @@ export default function ActivityPage() {
             </div>
           </div>
           
-          {filteredActivities.length === 0 && (
+          {!loading && activities.length === 0 && (
             <div className="text-center py-12">
               <Activity className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium">No activities found</h3>

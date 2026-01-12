@@ -18,6 +18,8 @@ import {
   Activity,
   UserCircle,
   Warehouse,
+  FileText,
+  Truck,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,17 +31,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useSupabaseAuth } from '@/hooks/useAuth';
+import { useSupabaseAuth } from '@/hooks/useAuth-local';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { href: '/admin', icon: LayoutDashboard, label: 'Dashboard' },
   { href: '/admin/users', icon: Users, label: 'Users' },
   { href: '/admin/customers', icon: UserCircle, label: 'Customers' },
+  { href: '/admin/suppliers', icon: Truck, label: 'Suppliers' },
   { href: '/admin/products', icon: Package, label: 'Products' },
   { href: '/admin/inventory', icon: Warehouse, label: 'Inventory' },
   { href: '/admin/categories', icon: FolderTree, label: 'Categories' },
   { href: '/admin/orders', icon: ShoppingCart, label: 'Orders' },
+  { href: '/admin/invoices', icon: FileText, label: 'Invoices' },
+  { href: '/admin/purchase-orders', icon: Truck, label: 'Purchase Orders' },
   { href: '/admin/analytics', icon: BarChart3, label: 'Analytics' },
   { href: '/admin/activity', icon: Activity, label: 'Activity' },
   { href: '/admin/settings', icon: Settings, label: 'Settings' },

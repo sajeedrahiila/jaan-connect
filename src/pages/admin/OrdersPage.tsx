@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Search,
@@ -43,6 +43,8 @@ import {
 import { OrderDetailDialog } from '@/components/admin/OrderDetailDialog';
 import { useToast } from '@/hooks/use-toast';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
 interface OrderItem {
   id: number;
   name: string;
@@ -54,6 +56,7 @@ interface OrderItem {
 
 interface Order {
   id: string;
+  order_number: string;
   customer: string;
   email: string;
   phone?: string;
@@ -204,20 +207,69 @@ const mockOrders: Order[] = [
 ];
 
 export default function OrdersPage() {
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const { toast } = useToast();
 
+  useEffect(() => {
+    fetchOrders();
+  }, [statusFilter]);
+
+  const fetchOrders = async () => {
+    try {
+      const token = localStorage.getItem('session_token');
+      const params = new URLSearchParams({ status: statusFilter });
+      const res = await fetch(`${API_URL}/api/orders?${params}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          const mapped = (result.data.data as any[]).map((o) => ({
+            id: o.id.toString(),
+            order_number: o.order_number,
+            customer: o.customer_name,
+            email: o.customer_email,
+            phone: o.customer_phone || '',
+            total: Number(o.total),
+            subtotal: Number(o.subtotal),
+            tax: Number(o.tax),
+            shipping: Number(o.shipping_fee),
+            items: [], // Load on detail view
+            status: o.status,
+            date: o.created_at,
+            shippingAddress: {
+              street: o.shipping_street,
+              city: o.shipping_city,
+              state: o.shipping_state,
+              zip: o.shipping_zip,
+              country: o.shipping_country,
+            },
+            paymentMethod: o.payment_method,
+            notes: o.notes || '',
+            trackingNumber: o.tracking_number || '',
+          }));
+          setOrders(mapped);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error);
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
-      order.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.order_number.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.customer.toLowerCase().includes(searchQuery.toLowerCase()) ||
       order.email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    return matchesSearch;
   });
 
   const getStatusBadge = (status: string) => {
@@ -277,22 +329,46 @@ export default function OrdersPage() {
   };
 
   const handleStatusUpdate = async (orderId: string, newStatus: string, trackingNumber?: string) => {
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    
-    setOrders((prev) =>
-      prev.map((order) =>
-        order.id === orderId
-          ? { ...order, status: newStatus as Order['status'], trackingNumber: trackingNumber || order.trackingNumber }
-          : order
-      )
-    );
+    try {
+      const token = localStorage.getItem('session_token');
+      const orderIdNum = orderId.replace('ORD-', '').replace(/^0+/, ''); // Extract numeric ID
+      
+      const res = await fetch(`${API_URL}/api/admin/orders/${orderIdNum}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ status: newStatus, tracking_number: trackingNumber }),
+      });
 
-    // Update selected order if it's the one being updated
-    if (selectedOrder?.id === orderId) {
-      setSelectedOrder((prev) =>
-        prev ? { ...prev, status: newStatus as Order['status'], trackingNumber: trackingNumber || prev.trackingNumber } : null
-      );
+      if (res.ok) {
+        // Update local state
+        setOrders((prev) =>
+          prev.map((order) =>
+            order.id === orderId
+              ? { ...order, status: newStatus as Order['status'], trackingNumber: trackingNumber || order.trackingNumber }
+              : order
+          )
+        );
+
+        // Update selected order if it's the one being updated
+        if (selectedOrder?.id === orderId) {
+          setSelectedOrder((prev) =>
+            prev ? { ...prev, status: newStatus as Order['status'], trackingNumber: trackingNumber || prev.trackingNumber } : null
+          );
+        }
+      } else {
+        throw new Error('Failed to update order');
+      }
+    } catch (error) {
+      console.error('Error updating order status:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to update order status',
+        variant: 'destructive',
+      });
     }
   };
 

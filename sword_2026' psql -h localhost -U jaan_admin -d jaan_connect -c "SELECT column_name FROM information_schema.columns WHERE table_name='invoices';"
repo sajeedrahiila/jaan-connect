@@ -1,0 +1,44 @@
+                                         Table "public.invoices"
+     Column      |           Type           | Collation | Nullable |               Default                
+-----------------+--------------------------+-----------+----------+--------------------------------------
+ id              | integer                  |           | not null | nextval('invoices_id_seq'::regclass)
+ invoice_number  | text                     |           | not null | 
+ order_id        | integer                  |           |          | 
+ user_id         | uuid                     |           |          | 
+ customer_name   | text                     |           | not null | 
+ customer_email  | text                     |           | not null | 
+ customer_phone  | text                     |           |          | 
+ billing_street  | text                     |           | not null | 
+ billing_street2 | text                     |           |          | 
+ billing_city    | text                     |           | not null | 
+ billing_state   | text                     |           | not null | 
+ billing_zip     | text                     |           | not null | 
+ billing_country | text                     |           | not null | 'United States'::text
+ subtotal        | numeric(12,2)            |           | not null | 
+ tax             | numeric(12,2)            |           | not null | 0
+ shipping_fee    | numeric(12,2)            |           | not null | 0
+ total           | numeric(12,2)            |           | not null | 
+ amount_paid     | numeric(12,2)            |           | not null | 0
+ balance_due     | numeric(12,2)            |           | not null | 
+ status          | invoice_status           |           | not null | 'draft'::invoice_status
+ issue_date      | date                     |           | not null | CURRENT_DATE
+ due_date        | date                     |           | not null | 
+ paid_date       | date                     |           |          | 
+ notes           | text                     |           |          | 
+ created_at      | timestamp with time zone |           | not null | now()
+ updated_at      | timestamp with time zone |           | not null | now()
+Indexes:
+    "invoices_pkey" PRIMARY KEY, btree (id)
+    "idx_invoices_due_date" btree (due_date)
+    "idx_invoices_order_id" btree (order_id)
+    "idx_invoices_status" btree (status)
+    "idx_invoices_user_id" btree (user_id)
+    "invoices_invoice_number_key" UNIQUE CONSTRAINT, btree (invoice_number)
+Foreign-key constraints:
+    "invoices_order_id_fkey" FOREIGN KEY (order_id) REFERENCES orders(id) ON DELETE SET NULL
+    "invoices_user_id_fkey" FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE SET NULL
+Referenced by:
+    TABLE "invoice_items" CONSTRAINT "invoice_items_invoice_id_fkey" FOREIGN KEY (invoice_id) REFERENCES invoices(id) ON DELETE CASCADE
+Triggers:
+    update_invoices_updated_at BEFORE UPDATE ON invoices FOR EACH ROW EXECUTE FUNCTION update_updated_at_column()
+

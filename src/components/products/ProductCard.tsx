@@ -1,3 +1,4 @@
+import React, { forwardRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ShoppingCart, Eye, Star } from 'lucide-react';
@@ -12,7 +13,8 @@ interface ProductCardProps {
   index?: number;
 }
 
-export function ProductCard({ product, index = 0 }: ProductCardProps) {
+export const ProductCard = forwardRef<HTMLDivElement, ProductCardProps>(
+  ({ product, index = 0 }, ref) => {
   const { addToCart } = useCart();
   
   const stockStatusStyles = {
@@ -36,11 +38,12 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
 
   return (
     <motion.div
+      ref={ref as React.Ref<HTMLDivElement>}
       initial={{ opacity: 0, y: 30 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.05, duration: 0.4 }}
       whileHover={{ y: -8 }}
-      className="group"
+      className="relative group"
     >
       <Link to={`/products/${product.slug}`}>
         <div className="relative bg-card rounded-2xl border border-border overflow-hidden hover:border-primary/30 hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
@@ -134,4 +137,6 @@ export function ProductCard({ product, index = 0 }: ProductCardProps) {
       </Link>
     </motion.div>
   );
-}
+});
+
+ProductCard.displayName = 'ProductCard';

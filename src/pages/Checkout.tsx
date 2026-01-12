@@ -28,7 +28,7 @@ import {
 } from '@/components/ui/select';
 import { Layout } from '@/components/layout/Layout';
 import { useCart } from '@/contexts/CartContext';
-import { useSupabaseAuth } from '@/hooks/useAuth';
+import { useSupabaseAuth } from '@/hooks/useAuth-local';
 import { useToast } from '@/hooks/use-toast';
 import type { Address } from '@/lib/types';
 
@@ -165,22 +165,75 @@ const Checkout = () => {
     setLoading(true);
 
     try {
-      // Simulate order creation - in production this would call your API
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      const generatedOrderNumber = `ORD-${Date.now().toString(36).toUpperCase()}`;
-      setOrderNumber(generatedOrderNumber);
+      const token = localStorage.getItem('session_token');
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+      const orderData = {
+        customer_name: shippingAddress.name,
+        customer_email: user.email,
+        customer_phone: shippingAddress.phone,
+        shipping_address: {
+          street: shippingAddress.street,
+          street2: shippingAddress.street2,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          zip: shippingAddress.zip,
+          country: shippingAddress.country,
+        },
+        billing_address: sameAsBilling ? null : {
+          street: billingAddress.street,
+          street2: billingAddress.street2,
+          city: billingAddress.city,
+          state: billingAddress.state,
+          zip: billingAddress.zip,
+          country: billingAddress.country,
+        },
+        items: cart.items.map((item) => ({
+          product_id: item.product_id,
+          product_name: item.product.name,
+          product_sku: item.product.sku || `PROD-${item.product_id}`,
+          quantity: item.quantity,
+          unit_price: item.product.price,
+          total_price: item.product.price * item.quantity,
+        })),
+        subtotal: cart.subtotal,
+        tax: cart.tax,
+        shipping_fee: cart.shipping,
+        total: cart.total,
+        payment_method: paymentMethod,
+        notes: '',
+        user_id: user.id,
+      };
+
+      const res = await fetch(`${apiUrl}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify(orderData),
+      });
+
+      const result = await res.json();
+
+      if (!res.ok || !result.success) {
+        throw new Error(result.error || 'Failed to create order');
+      }
+
+      setOrderNumber(result.data.order_number);
       setOrderPlaced(true);
       clearCart();
 
       toast({
         title: 'Order placed successfully!',
-        description: `Your order ${generatedOrderNumber} has been confirmed.`,
+        description: `Your order ${result.data.order_number} has been confirmed.`,
       });
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Order error:', error);
       toast({
         title: 'Error placing order',
-        description: 'Something went wrong. Please try again.',
+        description: error.message || 'Something went wrong. Please try again.',
         variant: 'destructive',
       });
     } finally {

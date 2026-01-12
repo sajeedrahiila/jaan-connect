@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import {
   TrendingUp,
@@ -42,94 +42,118 @@ import {
   Legend,
 } from 'recharts';
 
-// Mock data for analytics
-const revenueData = [
-  { month: 'Jan', revenue: 42500, orders: 156, customers: 89 },
-  { month: 'Feb', revenue: 38900, orders: 142, customers: 76 },
-  { month: 'Mar', revenue: 51200, orders: 189, customers: 102 },
-  { month: 'Apr', revenue: 47800, orders: 175, customers: 95 },
-  { month: 'May', revenue: 55600, orders: 198, customers: 118 },
-  { month: 'Jun', revenue: 62300, orders: 234, customers: 145 },
-  { month: 'Jul', revenue: 58900, orders: 212, customers: 132 },
-  { month: 'Aug', revenue: 67400, orders: 256, customers: 158 },
-  { month: 'Sep', revenue: 72100, orders: 278, customers: 167 },
-  { month: 'Oct', revenue: 69500, orders: 265, customers: 155 },
-  { month: 'Nov', revenue: 78200, orders: 298, customers: 182 },
-  { month: 'Dec', revenue: 85600, orders: 324, customers: 198 },
-];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
-const categoryBreakdown = [
-  { name: 'Grains & Rice', value: 35, sales: 12450, color: 'hsl(var(--primary))' },
-  { name: 'Cooking Oils', value: 25, sales: 8920, color: '#10b981' },
-  { name: 'Beverages', value: 20, sales: 7136, color: '#6366f1' },
-  { name: 'Sweeteners', value: 12, sales: 4282, color: '#f59e0b' },
-  { name: 'Spices', value: 8, sales: 2854, color: '#ec4899' },
-];
+interface AnalyticsData {
+  metrics: {
+    totalRevenue: number;
+    totalOrders: number;
+    totalCustomers: number;
+    avgOrderValue: number;
+    revenueChange: number;
+  };
+  monthlyTrend: Array<{
+    month: string;
+    revenue: number;
+    orders: number;
+    customers: number;
+  }>;
+  categoryBreakdown: Array<{
+    name: string;
+    orders: number;
+    sales: number;
+  }>;
+  statusDistribution: Array<{
+    status: string;
+    count: number;
+  }>;
+  topCustomers: Array<{
+    name: string;
+    orders: number;
+    revenue: number;
+  }>;
+}
 
-const orderStatusData = [
-  { status: 'Delivered', count: 245, color: '#10b981' },
-  { status: 'Shipped', count: 89, color: '#6366f1' },
-  { status: 'Processing', count: 45, color: '#f59e0b' },
-  { status: 'Pending', count: 23, color: '#ef4444' },
-];
+const COLORS = ['hsl(var(--primary))', '#10b981', '#6366f1', '#f59e0b', '#ec4899', '#8b5cf6'];
 
-const topCustomers = [
-  { name: 'Sunrise Grocery Store', orders: 45, revenue: 12450, growth: 23 },
-  { name: 'Fresh Mart Ltd', orders: 38, revenue: 9870, growth: 15 },
-  { name: 'Green Valley Foods', orders: 32, revenue: 8540, growth: -5 },
-  { name: 'Metro Supermarket', orders: 28, revenue: 7320, growth: 12 },
-  { name: 'City Fresh Market', orders: 25, revenue: 6890, growth: 8 },
-];
-
-const hourlyTraffic = [
-  { hour: '6AM', visitors: 45, orders: 2 },
-  { hour: '8AM', visitors: 120, orders: 8 },
-  { hour: '10AM', visitors: 280, orders: 22 },
-  { hour: '12PM', visitors: 350, orders: 35 },
-  { hour: '2PM', visitors: 320, orders: 28 },
-  { hour: '4PM', visitors: 290, orders: 25 },
-  { hour: '6PM', visitors: 380, orders: 42 },
-  { hour: '8PM', visitors: 420, orders: 48 },
-  { hour: '10PM', visitors: 180, orders: 15 },
-];
-
-const metrics = [
-  {
-    title: 'Total Revenue',
-    value: '$730,000',
-    change: '+18.2%',
-    trend: 'up',
-    icon: DollarSign,
-    description: 'Compared to last year',
-  },
-  {
-    title: 'Total Orders',
-    value: '2,727',
-    change: '+12.5%',
-    trend: 'up',
-    icon: ShoppingCart,
-    description: 'Compared to last year',
-  },
-  {
-    title: 'Total Customers',
-    value: '1,617',
-    change: '+8.3%',
-    trend: 'up',
-    icon: Users,
-    description: 'Compared to last year',
-  },
-  {
-    title: 'Avg. Order Value',
-    value: '$267.62',
-    change: '+5.1%',
-    trend: 'up',
-    icon: TrendingUp,
-    description: 'Compared to last year',
-  },
-];
+const STATUS_COLORS: Record<string, string> = {
+  delivered: '#10b981',
+  shipped: '#6366f1',
+  processing: '#f59e0b',
+  pending: '#ef4444',
+  cancelled: '#6b7280',
+};
 
 export default function AnalyticsPage() {
   const [timeRange, setTimeRange] = useState('12m');
+  const [loading, setLoading] = useState(true);
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+
+  useEffect(() => {
+    fetchAnalytics();
+  }, []);
+
+  const fetchAnalytics = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch(`${API_URL}/api/admin/analytics`, {
+        credentials: 'include',
+      });
+      const data = await res.json();
+      if (data.success) {
+        setAnalyticsData(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch analytics:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !analyticsData) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
+
+  const { metrics, monthlyTrend, categoryBreakdown, statusDistribution, topCustomers } = analyticsData;
+
+  const metricsConfig = [
+    {
+      title: 'Total Revenue',
+      value: `$${metrics.totalRevenue.toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`,
+      change: `${metrics.revenueChange > 0 ? '+' : ''}${metrics.revenueChange.toFixed(1)}%`,
+      trend: metrics.revenueChange >= 0 ? 'up' : 'down',
+      icon: DollarSign,
+      description: 'Compared to previous period',
+    },
+    {
+      title: 'Total Orders',
+      value: metrics.totalOrders.toLocaleString(),
+      change: '+12.5%',
+      trend: 'up',
+      icon: ShoppingCart,
+      description: 'All time orders',
+    },
+    {
+      title: 'Total Customers',
+      value: metrics.totalCustomers.toLocaleString(),
+      change: '+8.3%',
+      trend: 'up',
+      icon: Users,
+      description: 'Unique customers',
+    },
+    {
+      title: 'Avg. Order Value',
+      value: `$${metrics.avgOrderValue.toFixed(2)}`,
+      change: '+5.1%',
+      trend: 'up',
+      icon: TrendingUp,
+      description: 'Average per order',
+    },
+  ];
 
   return (
     <div className="space-y-6">
@@ -162,7 +186,7 @@ export default function AnalyticsPage() {
 
       {/* Metrics Grid */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {metrics.map((metric, index) => (
+        {metricsConfig.map((metric, index) => (
           <motion.div
             key={metric.title}
             initial={{ opacity: 0, y: 20 }}
@@ -214,7 +238,7 @@ export default function AnalyticsPage() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={revenueData}>
+                  <AreaChart data={monthlyTrend}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
                         <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
@@ -256,7 +280,7 @@ export default function AnalyticsPage() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={revenueData}>
+                  <BarChart data={monthlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                     <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -284,7 +308,7 @@ export default function AnalyticsPage() {
             <CardContent>
               <div className="h-[400px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={revenueData}>
+                  <LineChart data={monthlyTrend}>
                     <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                     <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
                     <YAxis stroke="hsl(var(--muted-foreground))" />
@@ -329,12 +353,12 @@ export default function AnalyticsPage() {
                     innerRadius={60}
                     outerRadius={100}
                     paddingAngle={4}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}%`}
+                    dataKey="sales"
+                    label={({ name, sales }) => `${name}: $${(sales / 1000).toFixed(1)}k`}
                     labelLine={false}
                   >
                     {categoryBreakdown.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip
@@ -352,10 +376,10 @@ export default function AnalyticsPage() {
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4">
-              {categoryBreakdown.map((cat) => (
+              {categoryBreakdown.map((cat, index) => (
                 <div key={cat.name} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: cat.color }} />
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
                     <span className="text-sm">{cat.name}</span>
                   </div>
                   <span className="text-sm font-medium">${cat.sales.toLocaleString()}</span>
@@ -374,7 +398,7 @@ export default function AnalyticsPage() {
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={orderStatusData} layout="vertical">
+                <BarChart data={statusDistribution} layout="vertical">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" horizontal={false} />
                   <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
                   <YAxis type="category" dataKey="status" stroke="hsl(var(--muted-foreground))" width={80} />
@@ -386,19 +410,19 @@ export default function AnalyticsPage() {
                     }}
                   />
                   <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                    {orderStatusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    {statusDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={STATUS_COLORS[entry.status.toLowerCase()] || '#6b7280'} />
                     ))}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
             <div className="grid grid-cols-2 gap-3 mt-4">
-              {orderStatusData.map((status) => (
+              {statusDistribution.map((status) => (
                 <div key={status.status} className="flex items-center justify-between p-2 rounded-lg bg-secondary/30">
                   <div className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: status.color }} />
-                    <span className="text-sm">{status.status}</span>
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: STATUS_COLORS[status.status.toLowerCase()] || '#6b7280' }} />
+                    <span className="text-sm capitalize">{status.status}</span>
                   </div>
                   <span className="text-sm font-medium">{status.count}</span>
                 </div>
@@ -408,93 +432,37 @@ export default function AnalyticsPage() {
         </Card>
       </div>
 
-      {/* Traffic & Top Customers */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Hourly Traffic */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Hourly Traffic</CardTitle>
-            <CardDescription>Visitors and orders by hour (today)</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={hourlyTraffic}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="hour" stroke="hsl(var(--muted-foreground))" />
-                  <YAxis stroke="hsl(var(--muted-foreground))" />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: 'hsl(var(--card))',
-                      border: '1px solid hsl(var(--border))',
-                      borderRadius: '8px',
-                    }}
-                  />
-                  <Legend />
-                  <Area
-                    type="monotone"
-                    dataKey="visitors"
-                    stroke="#6366f1"
-                    fill="#6366f1"
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="orders"
-                    stroke="hsl(var(--primary))"
-                    fill="hsl(var(--primary))"
-                    fillOpacity={0.2}
-                    strokeWidth={2}
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Top Customers */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Top Customers</CardTitle>
-            <CardDescription>Highest spending customers this month</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              {topCustomers.map((customer, index) => (
-                <motion.div
-                  key={customer.name}
-                  initial={{ opacity: 0, x: 20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-bold text-muted-foreground w-6">#{index + 1}</span>
-                    <div>
-                      <p className="text-sm font-medium">{customer.name}</p>
-                      <p className="text-xs text-muted-foreground">{customer.orders} orders</p>
-                    </div>
+      {/* Top Customers */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Top Customers</CardTitle>
+          <CardDescription>Highest spending customers</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {topCustomers.map((customer, index) => (
+              <motion.div
+                key={customer.name}
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: index * 0.1 }}
+                className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-bold text-muted-foreground w-6">#{index + 1}</span>
+                  <div>
+                    <p className="text-sm font-medium">{customer.name}</p>
+                    <p className="text-xs text-muted-foreground">{customer.orders} orders</p>
                   </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium">${customer.revenue.toLocaleString()}</p>
-                    <div className="flex items-center justify-end">
-                      {customer.growth >= 0 ? (
-                        <ArrowUpRight className="h-3 w-3 text-emerald-500" />
-                      ) : (
-                        <ArrowDownRight className="h-3 w-3 text-red-500" />
-                      )}
-                      <span className={`text-xs ${customer.growth >= 0 ? 'text-emerald-500' : 'text-red-500'}`}>
-                        {customer.growth >= 0 ? '+' : ''}{customer.growth}%
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+                </div>
+                <div className="text-right">
+                  <p className="text-sm font-medium">${customer.revenue.toLocaleString()}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }

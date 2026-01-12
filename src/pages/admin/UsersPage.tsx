@@ -44,10 +44,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { supabase } from '@/integrations/supabase/client';
-import type { Database } from '@/integrations/supabase/types';
 
-type AppRole = Database['public']['Enums']['app_role'];
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+type AppRole = 'admin' | 'moderator' | 'user';
 
 interface UserWithRole {
   id: string;
@@ -72,37 +72,36 @@ export default function UsersPage() {
   const fetchUsers = async () => {
     try {
       setLoading(true);
-      
-      // Fetch profiles with their roles
-      const { data: profiles, error: profilesError } = await supabase
-        .from('profiles')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (profilesError) throw profilesError;
-
-      // Fetch all user roles
-      const { data: roles, error: rolesError } = await supabase
-        .from('user_roles')
-        .select('*');
-
-      if (rolesError) throw rolesError;
-
-      // Combine profiles with roles
-      const usersWithRoles: UserWithRole[] = (profiles || []).map((profile) => {
-        const userRole = roles?.find((r) => r.user_id === profile.user_id);
-        return {
-          id: profile.id,
-          user_id: profile.user_id,
-          full_name: profile.full_name,
-          email: profile.email,
-          phone: profile.phone,
-          created_at: profile.created_at,
-          role: userRole?.role || 'user',
-        };
+      const token = localStorage.getItem('session_token');
+      const params = new URLSearchParams({
+        ...(searchQuery ? { search: searchQuery } : {}),
       });
 
-      setUsers(usersWithRoles);
+      const res = await fetch(`${API_URL}/api/admin/users?${params}`, {
+        headers: {
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+      });
+
+      if (res.ok) {
+        const result = await res.json();
+        if (result.success && result.data) {
+          // Map backend response to frontend interface
+          const usersWithRoles: UserWithRole[] = result.data.map((user: any) => ({
+            id: user.id,
+            user_id: user.id,
+            full_name: user.full_name,
+            email: user.email,
+            phone: user.phone,
+            created_at: user.created_at,
+            role: user.role || 'user',
+          }));
+          setUsers(usersWithRoles);
+        }
+      } else {
+        throw new Error('Failed to fetch');
+      }
     } catch (error) {
       console.error('Error fetching users:', error);
       toast({
@@ -124,17 +123,18 @@ export default function UsersPage() {
 
     setUpdating(true);
     try {
-      // Update or insert the role
-      const { error } = await supabase
-        .from('user_roles')
-        .upsert({
-          user_id: selectedUser.user_id,
-          role: newRole,
-        }, {
-          onConflict: 'user_id,role',
-        });
+      const token = localStorage.getItem('session_token');
+      const res = await fetch(`${API_URL}/api/admin/users/${selectedUser.id}/role`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        credentials: 'include',
+        body: JSON.stringify({ role: newRole }),
+      });
 
-      if (error) throw error;
+      if (!res.ok) throw new Error('Failed to update role');
 
       toast({
         title: 'Role updated',
